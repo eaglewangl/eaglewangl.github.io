@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="这是我们尝试分析的第二个开源框架，大家加油。 步骤一：使用//加载一张图片，并设置占位图片 Picasso.with(this).load(&amp;quot;url&amp;quot;).placeholder(R.drawable.back).into(mIvPicassoTest); //加载一张图片，并设置加载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Picasso 源码解析">
+<meta property="og:url" content="eaglewangl.github.io/2017/07/18/Picasso 源码解析/index.html">
+<meta property="og:site_name" content="eaglewang&#39;s blog">
+<meta property="og:description" content="这是我们尝试分析的第二个开源框架，大家加油。 步骤一：使用//加载一张图片，并设置占位图片 Picasso.with(this).load(&amp;quot;url&amp;quot;).placeholder(R.drawable.back).into(mIvPicassoTest); //加载一张图片，并设置加载错误时和占位图片 Picasso.with(this).load(&amp;quot;url&amp;quot;">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-01-21T11:30:45.247Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Picasso 源码解析">
+<meta name="twitter:description" content="这是我们尝试分析的第二个开源框架，大家加油。 步骤一：使用//加载一张图片，并设置占位图片 Picasso.with(this).load(&amp;quot;url&amp;quot;).placeholder(R.drawable.back).into(mIvPicassoTest); //加载一张图片，并设置加载错误时和占位图片 Picasso.with(this).load(&amp;quot;url&amp;quot;">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="eaglewangl.github.io/2017/07/18/Picasso 源码解析/"/>
+
+
+
+
+
+  <title>Picasso 源码解析 | eaglewang's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">eaglewang's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="eaglewangl.github.io/2017/07/18/Picasso 源码解析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="eaglewang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="eaglewang's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Picasso 源码解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-07-18T21:00:02+08:00">
+                2017-07-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android-源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Android 源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>这是我们尝试分析的第二个开源框架，大家加油。</p>
+<h1 id="步骤一：使用"><a href="#步骤一：使用" class="headerlink" title="步骤一：使用"></a>步骤一：使用</h1><pre><code>//加载一张图片，并设置占位图片
+Picasso.with(this).load(&quot;url&quot;).placeholder(R.drawable.back).into(mIvPicassoTest);
+//加载一张图片，并设置加载错误时和占位图片
+Picasso.with(this).load(&quot;url&quot;).placeholder(R.drawable.back).error(R.drawable.below).into(mIvPicassoTest);
+//加载一张图片，并设置加载成功或者失败的回调接口
+Picasso.with(this).load(&quot;url&quot;).placeholder(R.drawable.back).into(mIvPicassoTest, new Callback() {
+    @Override
+    public void onSuccess() {
+        //加载成功的回调
+    }
+
+    @Override
+    public void onError() {
+        //加载失败的回调
+    }
+});
+//预加载一张图片
+Picasso.with(this).load(&quot;url&quot;).fetch();
+//同步加载图片，因为是在子线程调用的，必须回调回主线程才能设置图片
+//ps：这个方法的 bitmap 对象不会被缓存到内存中
+new Thread(){
+    @Override
+    public void run() {
+        try {
+            final Bitmap bitmap = Picasso.with(getApplicationContext()).load(&quot;url&quot;).get();
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mIvPicassoTest.setImageBitmap(bitmap);
+                }
+            });
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}.start();
+//加载图片，并且适应 ImageView 控件的大小，如果空间设置的是 wrap_content ，会直到这个控件得到具体的大小之后，才会显示图片
+Picasso.with(this).load(&quot;url&quot;).fit().into(mIvPicassoTest);
+//加载图片，并且将按照我们给定的尺寸显示出来，并且是以 centerCrop 的形式缩放
+Picasso.with(this).load(&quot;url&quot;).resize(200 , 200).centerCrop().into(mIvPicassoTest);
+//加载图片，并且可对图片进行一些变换操作，比如给图片添加边框，在图片的中央画一个圈圈等，并且还可以对图片进行旋转操作。
+Picasso.with(this).load(&quot;url&quot;).rotate(20).transform(new Transformation() {
+    @Override
+    public Bitmap transform(Bitmap source) {
+        return null;
+    }
+
+    @Override
+    public String key() {
+        return null;
+    }
+}).into(mIvPicassoTest);
+//可以给请求设置 tag，可以通过 tag 来控制这个请求是暂停还是继续（使用场景：滑动列表时暂停加载，停止滑动之后重新开始加载）
+Picasso.with(this).pauseTag(this);
+//可以使用自定义的 Picasso 来代替自带的 Picasso 对象。
+Picasso p = new Picasso.Builder(this).executor().downloader(downloader).memoryCache(cache);
+Picasso.setSingletonInstance(p);
+</code></pre><h1 id="步骤二：分析调用流程"><a href="#步骤二：分析调用流程" class="headerlink" title="步骤二：分析调用流程"></a>步骤二：分析调用流程</h1><p>现在我们根据我们使用 Picasso 这个类加载一张普通图片来看看整个流程：</p>
+<p> 1： <code>Picasso.with(Context)</code> 这个方法主要是为了得到 Picasso 的单例对象的方法，我们来看看源码：</p>
+<pre><code>public static Picasso with(Context context) {
+if (singleton == null) {
+  synchronized (Picasso.class) {
+    if (singleton == null) {
+      singleton = new Builder(context).build();
+    }
+  }
+}
+return singleton;
+</code></pre><p>  }</p>
+<p>可以看到，最后是通过 Builder 这个类的 build() 方法，生成了 Picasso 这个对象。 根据这个 Builder 名称，我们可以推测这里用来 Builder 设计模式，我们来想想这个模式的适用场景：构造方法参数很多，或者在不同的顺序设置不同的参数会造成不同的结果时会用到，那么我们接下来去看看 Builder.build 方法是不是和我们想的类似。</p>
+<pre><code>  public Picasso build() {
+  Context context = this.context;
+  //如果没有设置自己的 downloadr , 则设置默认的 downloader
+  if (downloader == null) {
+    downloader = Utils.createDefaultDownloader(context);
+  }
+  //如果没有设置 cache ，则设置默认的 LruCache 类（三级缓存策略）
+  if (cache == null) {
+    cache = new LruCache(context);
+  }
+  //如果没有设置线程池服务，则设置默认的线程管理对象
+  if (service == null) {
+    service = new PicassoExecutorService();
+  }
+  //如过没有设置图片变化的对象，则设置一个什么都不处理的图片变换对象
+  if (transformer == null) {
+    transformer = RequestTransformer.IDENTITY;
+  }
+  //创建一个 stats ， 用来统计内存命中数等
+  Stats stats = new Stats(cache);
+  //根据我们设置的对象创建一个 Dispatcher
+  Dispatcher dispatcher = new Dispatcher(context, service, HANDLER, downloader, cache, stats);
+  //创建一个 Picasso 的真正对象。
+  return new Picasso(context, dispatcher, cache, listener, transformer, requestHandlers, stats,
+      defaultBitmapConfig, indicatorsEnabled, loggingEnabled);
+}
+</code></pre><p>bingo，和我们预想的一样，看看生成一个 Picasso 的实例需要多少的参数，万一我们忘记其中一个参数，可能就麻烦了，所以确实用到了 Builder 模式不是吗，接下来我们再看看这个构造方法里面做了什么。</p>
+<pre><code>Picasso(Context context, Dispatcher dispatcher, Cache cache, Listener listener,
+  RequestTransformer requestTransformer, List&lt;RequestHandler&gt; extraRequestHandlers, Stats stats,
+  Bitmap.Config defaultBitmapConfig, boolean indicatorsEnabled, boolean loggingEnabled) {
+this.context = context;
+this.dispatcher = dispatcher;
+this.cache = cache;
+this.listener = listener;
+this.requestTransformer = requestTransformer;
+this.defaultBitmapConfig = defaultBitmapConfig;
+
+int builtInHandlers = 7; // 这是因为系统默认的 Handler 存在7个
+int extraCount = (extraRequestHandlers != null ? extraRequestHandlers.size() : 0);
+//根据我们自己创建的请求 Handler 和 Picasso 自带的7个请求个数来创建一个 list 集合，后面处理的时候会用到这个集合。
+List&lt;RequestHandler&gt; allRequestHandlers =
+    new ArrayList&lt;RequestHandler&gt;(builtInHandlers + extraCount);
+
+// ResourceRequestHandler needs to be the first in the list to avoid
+// forcing other RequestHandlers to perform null 
+// to cover the (request.resourceId != 0) case.
+根据官方注释，必须将 ResourceRequestHandler 对象放到第一位，因为其他 Handler 都会去检查是否存在 request.resourceId是否为零。
+allRequestHandlers.add(new ResourceRequestHandler(context));
+//如果存在我们自己定义的 RequestHandler 就将这个都添加到 list 集合中
+if (extraRequestHandlers != null) {
+  allRequestHandlers.addAll(extraRequestHandlers);
+}
+allRequestHandlers.add(new ContactsPhotoRequestHandler(context));
+allRequestHandlers.add(new MediaStoreRequestHandler(context));
+allRequestHandlers.add(new ContentStreamRequestHandler(context));
+allRequestHandlers.add(new AssetRequestHandler(context));
+allRequestHandlers.add(new FileRequestHandler(context));
+allRequestHandlers.add(new NetworkRequestHandler(dispatcher.downloader, stats));
+//将 list 转变成不能改变的集合。
+requestHandlers = Collections.unmodifiableList(allRequestHandlers);
+
+this.stats = stats;
+this.targetToAction = new WeakHashMap&lt;Object, Action&gt;();
+this.targetToDeferredRequestCreator = new WeakHashMap&lt;ImageView, DeferredRequestCreator&gt;();
+this.indicatorsEnabled = indicatorsEnabled;
+this.loggingEnabled = loggingEnabled;
+this.referenceQueue = new ReferenceQueue&lt;Object&gt;();
+this.cleanupThread = new CleanupThread(referenceQueue, HANDLER);
+this.cleanupThread.start();
+}
+</code></pre><p>到此为止， Picasso 的 with 方法已经分析完了，主要就是实例化了 Picasso 这个对象，接下来我们看看load方法做了什么：</p>
+<pre><code>public RequestCreator load(Uri uri) {
+return new RequestCreator(this, uri, 0);}
+</code></pre><p>可以看到，只是创建了一个 RequestCreator 对象，我们来看看这个对象的构造方法。</p>
+<pre><code>RequestCreator(Picasso picasso, Uri uri, int resourceId) {
+if (picasso.shutdown) {
+  throw new IllegalStateException(
+      &quot;Picasso instance already shut down. Cannot submit new requests.&quot;);
+}
+this.picasso = picasso;
+this.data = new Request.Builder(uri, resourceId, picasso.defaultBitmapConfig);}
+</code></pre><p>这里将外面的 Picasso 实例引入了进来，并且用 Request.Builder 创建了自己的 data 对象，此外就没有其他的事情了，那么我们接下来看看我们要设置占位图片的方法 <code>placeholder(int resourceId)</code> ，因为是在 RequestCreator 这个对象中的，我们就去找找这个类中的 <code>placeholder()</code>方法吧</p>
+<pre><code>public RequestCreator placeholder(int placeholderResId) {
+//如果之前设置过不加载占位图片，则抛出异常
+if (!setPlaceholder) {
+  throw new IllegalStateException(&quot;Already explicitly declared as no placeholder.&quot;);
+}
+//如果占位图片的资源id 是0 ， 则抛出异常
+if (placeholderResId == 0) {
+  throw new IllegalArgumentException(&quot;Placeholder image resource invalid.&quot;);
+}
+//如果占位图片已经存在了，则抛出异常
+if (placeholderDrawable != null) {
+  throw new IllegalStateException(&quot;Placeholder image already set.&quot;);
+}
+//否则，设置占位图片的id
+this.placeholderResId = placeholderResId;
+//返回 this 可以链式调用。
+return this;
+  }
+</code></pre><p>由于<code>placeholder</code>方法返回的还是 RequestCreator 这个对象，所以我们知道 最后一个 <code>into</code> 方法也是在这个对象里面的，我们来看看<code>into</code>方法到底做了些什么：</p>
+<pre><code>public void into(ImageView target) {
+into(target, null);
+  }
+</code></pre><p>​<br>     public void into(ImageView target, Callback callback) {<br>    long started = System.nanoTime();<br>    //检查当前是否在主线程<br>    checkMain();<br>    //如果要设置的对象为空，则抛出异常<br>    if (target == null) {<br>      throw new IllegalArgumentException(“Target must not be null.”);<br>    }<br>    //如果调用的 data 对象中的 hasImage()的返回值为false ， 则取消这个请求<br>    if (!data.hasImage()) {<br>      picasso.cancelRequest(target);<br>      //如果设置了占位图片，在调用本对象的设置占位图片的方法<br>      if (setPlaceholder) {<br>        setPlaceholder(target, getPlaceholderDrawable());<br>      }<br>      return;<br>    }<br>    //只有设置过fit()方法后，deferred这个属性才为真，但是如果设置fit 意味适应图片大小<br>    if (deferred) {<br>      //如果是fit方法之后，不可以调用 resize 方法给 data 属性 重新设置大小<br>      if (data.hasSize()) {<br>        throw new IllegalStateException(“Fit cannot be used with resize.”);<br>      }<br>      //这里拿到 ImageView 的大小，如果大小都为空的话，就说明此时的 ImageView 为 wrap_content<br>      int width = target.getWidth();<br>      int height = target.getHeight();<br>      if (width == 0 || height == 0) {<br>        if (setPlaceholder) {<br>          setPlaceholder(target, getPlaceholderDrawable());<br>        }<br>        //监听ImageView的ViewTreeObserver.OnPreDrawListener接口,一旦ImageView<br>        //的宽高被赋值,就按照ImageView的宽高继续加载.<br>        picasso.defer(target, new DeferredRequestCreator(this, target, callback));<br>        return;<br>      }<br>      //给这个data 对象设置宽高，需要注意的是，基本上所有设置 bitmap 属性的方法，都是通过改变 data 里面的变量来实现的。<br>      data.resize(width, height);<br>    }<br>    //创建请求对象<br>    Request request = createRequest(started);<br>    //创建请求的键名<br>    String requestKey = createKey(request);<br>    //判断是否可以从内存缓存中读取数据，如果可以，去内存中读取图片<br>    if (shouldReadFromMemoryCache(memoryPolicy)) {<br>      Bitmap bitmap = picasso.quickMemoryCacheCheck(requestKey);<br>      //如果这时从内存中拿到的图片不为null，就将这个请求取消，并且将得到的图片设置给 target，同时，如果回调接口存在的话，就调用设置图片成功的方法。<br>      if (bitmap != null) {<br>        picasso.cancelRequest(target);<br>        setBitmap(target, picasso.context, bitmap, MEMORY, noFade, picasso.indicatorsEnabled);<br>        if (picasso.loggingEnabled) {<br>          log(OWNER_MAIN, VERB_COMPLETED, request.plainId(), “from “ + MEMORY);<br>        }<br>        if (callback != null) {<br>          callback.onSuccess();<br>        }<br>        return;<br>      }<br>    }<br>    //如果设置了占位图片，就去设置占位图片<br>    if (setPlaceholder) {<br>      setPlaceholder(target, getPlaceholderDrawable());<br>    }<br>    //创建一个 ImageViewAction 的对象，并将这个对象加入到请求队列中。<br>    Action action =<br>        new ImageViewAction(picasso, target, request, memoryPolicy, networkPolicy, errorResId,<br>            errorDrawable, requestKey, tag, callback, noFade);</p>
+<pre><code>picasso.enqueueAndSubmit(action);
+</code></pre><p>  }</p>
+<p>可以看到，最后 picasso 对象将我们创建的 ImageViewAction 加入到了我的队列中，我们来看看代码：</p>
+<pre><code>void enqueueAndSubmit(Action action) {
+Object target = action.getTarget();
+//这里是为了保证这个请求对象不存在
+if (target != null &amp;&amp; targetToAction.get(target) != action) {
+  // This will also check we are on the main thread.
+  cancelExistingRequest(target);
+  targetToAction.put(target, action);
+}
+//提交请求
+submit(action);
+  }
+
+  void submit(Action action) {
+    dispatcher.dispatchSubmit(action);
+  }
+</code></pre><p>可以看到，最后调用了 <code>dispatcher.dispatchSubmit(action)</code>方法，我们继续追踪</p>
+<pre><code>void dispatchSubmit(Action action) {
+    handler.sendMessage(handler.obtainMessage(REQUEST_SUBMIT, action));
+  }
+</code></pre><p>用 handler 对象发送了一个消息，我们来看看这个 handler 对象是什么</p>
+<pre><code>Dispatcher(Context context, ExecutorService service, Handler mainThreadHandler,
+Downloader downloader, Cache cache, Stats stats) {
+this.dispatcherThread = new DispatcherThread();
+this.dispatcherThread.start();
+Utils.flushStackLocalLeaks(dispatcherThread.getLooper());
+this.context = context;
+this.service = service;
+this.hunterMap = new LinkedHashMap&lt;String, BitmapHunter&gt;();
+this.failedActions = new WeakHashMap&lt;Object, Action&gt;();
+this.pausedActions = new WeakHashMap&lt;Object, Action&gt;();
+this.pausedTags = new HashSet&lt;Object&gt;();
+this.handler = new DispatcherHandler(dispatcherThread.getLooper(), this);
+this.downloader = downloader;
+this.mainThreadHandler = mainThreadHandler;
+this.cache = cache;
+this.stats = stats;
+this.batch = new ArrayList&lt;BitmapHunter&gt;(4);
+this.airplaneMode = Utils.isAirplaneModeOn(this.context);
+this.scansNetworkChanges = hasPermission(context, Manifest.permission.ACCESS_NETWORK_STATE);
+this.receiver = new NetworkBroadcastReceiver(this);
+receiver.register();
+  }
+</code></pre><p>这是 Dispatcher 的构造方法，我们可以看到，首先创建了一个 DispatcherThread 的线程， 然后根据这个线程的 looper 创建了一个 handler 对象。这里我们就明白了原来是通过Dispatcher类里的一个子线程里的handler不断的派发我们的消息,这里是用来派发我们的REQUEST_SUBMIT消息,而且最终是调用了 dispatcher.performSubmit(action);</p>
+<pre><code>void performSubmit(Action action, boolean dismissFailed) {
+    //如果这个 action 的tag 是我们设置过暂停的方法 ，那么我们会将这个请求放在暂停的 Action 映射中，然后直接返回，不去做接下来的操作。
+    if (pausedTags.contains(action.getTag())) {
+      pausedActions.put(action.getTarget(), action);
+      if (action.getPicasso().loggingEnabled) {
+        log(OWNER_DISPATCHER, VERB_PAUSED, action.request.logId(),
+            &quot;because tag &apos;&quot; + action.getTag() + &quot;&apos; is paused&quot;);
+      }
+      return;
+    }
+    //通过action的key来在hunterMap查找是否有相同的hunter,这个key里保存的是我们
+      //的uri或者resourceId和一些参数,如果都是一样就将这些action合并到一个
+      //BitmapHunter里去.
+    BitmapHunter hunter = hunterMap.get(action.getKey());
+    if (hunter != null) {
+      hunter.attach(action);
+      return;
+    }
+    //如果线程池已经关闭了，也会返回
+    if (service.isShutdown()) {
+      if (action.getPicasso().loggingEnabled) {
+        log(OWNER_DISPATCHER, VERB_IGNORED, action.request.logId(), &quot;because shut down&quot;);
+      }
+      return;
+    }
+    //如果没有上述情况，则生成一个 BitmapHunter 对象
+    hunter = forRequest(action.getPicasso(), this, cache, stats, action);
+    //通过执行一个线程返回一个 future 对象
+    hunter.future = service.submit(hunter);
+    //再在表里面将这个 action 的属性存入
+    hunterMap.put(action.getKey(), hunter);
+    if (dismissFailed) {
+      failedActions.remove(action.getTarget());
+    }
+
+    if (action.getPicasso().loggingEnabled) {
+      log(OWNER_DISPATCHER, VERB_ENQUEUED, action.request.logId());
+    }
+  }
+</code></pre><p>那么接下来的重点就在 <code>forRequest()</code>方法里面了，加油，马上就能看到胜利的曙光了。</p>
+<pre><code>  static BitmapHunter forRequest(Picasso picasso, Dispatcher dispatcher, Cache cache, Stats stats,
+  Action action) {
+  Request request = action.getRequest();
+  //获取 requestHandler 的集合，还记得之前说过，这个集合是自定义的 requestHandler + picasso 的默认7个的列表吗
+  List&lt;RequestHandler&gt; requestHandlers = picasso.getRequestHandlers();
+
+  // Index-based loop to avoid allocating an iterator.
+  //noinspection ForLoopReplaceableByForEach
+  //循环所有，看看哪个可以处理这个请求，这里用到了责任链模式，谁能处理就去处理，不能处理就传给下一个对象。
+  for (int i = 0, count = requestHandlers.size(); i &lt; count; i++) {
+    RequestHandler requestHandler = requestHandlers.get(i);
+    if (requestHandler.canHandleRequest(request)) {
+      return new BitmapHunter(picasso, dispatcher, cache, stats, action, requestHandler);
+    }
+  }
+  //如果上面都没有能够处理的，就创建一个包含错误信息的 BitmapHunter 对象。
+  return new BitmapHunter(picasso, dispatcher, cache, stats, action, ERRORING_HANDLER);
+}
+</code></pre><p>最后创建了一个 BitmapHunter 对象，我们点开这个对象，发现这个对象是实现了 Runnable 接口的类，那么我们需要关注的点就在它复写的<code>run</code>方法里面了：</p>
+<pre><code>  @Override public void run() {
+  try {
+    //更新线程名臣
+    updateThreadName(data);
+
+    if (picasso.loggingEnabled) {
+      log(OWNER_HUNTER, VERB_EXECUTING, getLogIdsForHunter(this));
+    }
+    //通过 hunt方法 得到result 对象
+    result = hunt();
+    //如果返回的result 为null ，则调用dispatcher.dispatcheFailed的方法，否则就调用dispatche.dispatcheComplete方法。
+    if (result == null) {
+      dispatcher.dispatchFailed(this);
+    } else {
+      dispatcher.dispatchComplete(this);
+    }
+  } catch (Downloader.ResponseException e) {
+    if (!e.localCacheOnly || e.responseCode != 504) {
+      exception = e;
+    }
+    dispatcher.dispatchFailed(this);
+  } catch (NetworkRequestHandler.ContentLengthException e) {
+    exception = e;
+    dispatcher.dispatchRetry(this);
+  } catch (IOException e) {
+    exception = e;
+    dispatcher.dispatchRetry(this);
+  } catch (OutOfMemoryError e) {
+    StringWriter writer = new StringWriter();
+    stats.createSnapshot().dump(new PrintWriter(writer));
+    exception = new RuntimeException(writer.toString(), e);
+    dispatcher.dispatchFailed(this);
+  } catch (Exception e) {
+    exception = e;
+    dispatcher.dispatchFailed(this);
+  } finally {
+    Thread.currentThread().setName(Utils.THREAD_IDLE_NAME);
+  }
+}
+</code></pre><p>我们看看 <code>hunt（）</code>方法做了什么:</p>
+<pre><code>  Bitmap hunt() throws IOException {
+  Bitmap bitmap = null;
+  //如果可以直接从内存中读取图片
+  if (shouldReadFromMemoryCache(memoryPolicy)) {
+    bitmap = cache.get(key);
+    if (bitmap != null) {
+      //如果从内存中读到了图片，给 state 设置一个缓存命中的标志，用于统计缓存命中率。
+      stats.dispatchCacheHit();
+      //标志这个结果是从内存中获得的。
+      loadedFrom = MEMORY;
+      if (picasso.loggingEnabled) {
+        log(OWNER_HUNTER, VERB_DECODED, data.logId(), &quot;from cache&quot;);
+      }
+      return bitmap;
+    }
+  }
+  //根据 retryCount == 0 这个条件来给 data 设置网络策略
+  data.networkPolicy = retryCount == 0 ? NetworkPolicy.OFFLINE.index : networkPolicy;
+  //由于我们是通过网络去请求图片，那么会走 NetworkRequestHandler 的 load 方法，这个方法就是去下载图片，并将其封装成 RequestHandler.Result 的方法，这时,result 对象中应该存在图片信息等属性。
+  RequestHandler.Result result = requestHandler.load(data, networkPolicy);
+  //如果result 不为null ，那么去读取这个 result 的属性
+  if (result != null) {
+    loadedFrom = result.getLoadedFrom();
+    exifRotation = result.getExifOrientation();
+
+    bitmap = result.getBitmap();
+
+    // If there was no Bitmap then we need to decode it from the stream.
+    //有可能结果没有图片 而是流，那么就需要去流去做编解码。
+    if (bitmap == null) {
+      InputStream is = result.getStream();
+      try {
+        bitmap = decodeStream(is, data);
+      } finally {
+        Utils.closeQuietly(is);
+      }
+    }
+  }
+  //获得图片，给stats 设置
+  if (bitmap != null) {
+    if (picasso.loggingEnabled) {
+      log(OWNER_HUNTER, VERB_DECODED, data.logId());
+    }
+    stats.dispatchBitmapDecoded(bitmap);
+    //如果我们需要对图片做变化，或者需要对图片做旋转，就会走这个方法。
+    if (data.needsTransformation() || exifRotation != 0) {
+      synchronized (DECODE_LOCK) {
+        if (data.needsMatrixTransform() || exifRotation != 0) {
+          bitmap = transformResult(data, bitmap, exifRotation);
+          if (picasso.loggingEnabled) {
+            log(OWNER_HUNTER, VERB_TRANSFORMED, data.logId());
+          }
+        }
+        //如果图片有自定义的展示动画，就会走这个方法。
+        if (data.hasCustomTransformations()) {
+          bitmap = applyCustomTransformations(data.transformations, bitmap);
+          if (picasso.loggingEnabled) {
+            log(OWNER_HUNTER, VERB_TRANSFORMED, data.logId(), &quot;from custom transformations&quot;);
+          }
+        }
+      }
+      if (bitmap != null) {
+        stats.dispatchBitmapTransformed(bitmap);
+      }
+    }
+  }
+
+  return bitmap;
+}
+</code></pre><p>现在已经得到我们的图片了，由于我们拿到图片了，就会走上面的dispatcher.dispacthComplete()方法，最终会回调这个方法：</p>
+<pre><code>  void performComplete(BitmapHunter hunter) {
+  //如果需要写入缓存
+  if (shouldWriteToMemoryCache(hunter.getMemoryPolicy())) {
+    cache.set(hunter.getKey(), hunter.getResult());
+  }
+  //请求已经完成，把 map 里面的键名删除
+  hunterMap.remove(hunter.getKey());
+  batch(hunter);
+  if (hunter.getPicasso().loggingEnabled) {
+    log(OWNER_DISPATCHER, VERB_BATCHED, getLogIdsForHunter(hunter), &quot;for completion&quot;);
+  }
+}
+</code></pre><p>这里面的<code>batch</code>方法，主要是调用了 <code>diapatcher.performBatchComplete()</code>的方法</p>
+<pre><code>void performBatchComplete() {
+List&lt;BitmapHunter&gt; copy = new ArrayList&lt;BitmapHunter&gt;(batch);
+batch.clear();
+//看到这个命名，我就猜测这是将信息传递给主线程的方法，那么我们现在可以去找找主线程的handler又执行了什么呢
+mainThreadHandler.sendMessage(mainThreadHandler.obtainMessage(HUNTER_BATCH_COMPLETE, copy));
+logBatch(copy);
+  }
+switch (msg.what) {
+    case HUNTER_BATCH_COMPLETE: {
+      @SuppressWarnings(&quot;unchecked&quot;) List&lt;BitmapHunter&gt; batch = (List&lt;BitmapHunter&gt;) msg.obj;
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, n = batch.size(); i &lt; n; i++) {
+        BitmapHunter hunter = batch.get(i);
+        hunter.picasso.complete(hunter);
+      }
+      break;
+    }
+</code></pre><p>我这里只是截取了一个部分的 <code>handleMessage()</code>方法，可以看到，这里会把我们的集合里所有的 BitmapHunter对象取出来，然后去回调 Picasso 的回调方法，我们继续。</p>
+<pre><code>  void complete(BitmapHunter hunter) {
+  //拿到一开始创建这个对象的 Action 对象
+  Action single = hunter.getAction();
+  //获取后来被添加进来的 Action 对象
+  List&lt;Action&gt; joined = hunter.getActions();
+  //如果被添加进来的对象不为 null ，那么就认为包含多个对象
+  boolean hasMultiple = joined != null &amp;&amp; !joined.isEmpty();
+  //判断是否需要分发
+  boolean shouldDeliver = single != null || hasMultiple;
+
+  if (!shouldDeliver) {
+    return;
+  }
+  //拿到要分发的需要用到的属性
+  Uri uri = hunter.getData().uri;
+  Exception exception = hunter.getException();
+  Bitmap result = hunter.getResult();
+  LoadedFrom from = hunter.getLoadedFrom();
+  //把结果分发给所有用到的 Action 对象
+  if (single != null) {
+    deliverAction(result, from, single);
+  }
+
+  if (hasMultiple) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, n = joined.size(); i &lt; n; i++) {
+      Action join = joined.get(i);
+      deliverAction(result, from, join);
+    }
+  }
+  //回调图片加载出错，并将出错信息返回
+  if (listener != null &amp;&amp; exception != null) {
+    listener.onImageLoadFailed(this, uri, exception);
+  }
+}
+
+  private void deliverAction(Bitmap result, LoadedFrom from, Action action) {
+  //如果这个 action 对象已经被取消了，则直接返回
+  if (action.isCancelled()) {
+    return;
+  }
+  if (!action.willReplay()) {
+    targetToAction.remove(action.getTarget());
+  }
+  if (result != null) {
+    if (from == null) {
+      throw new AssertionError(&quot;LoadedFrom cannot be null.&quot;);
+    }
+    action.complete(result, from);
+    if (loggingEnabled) {
+      log(OWNER_MAIN, VERB_COMPLETED, action.request.logId(), &quot;from &quot; + from);
+    }
+  } else {
+    action.error();
+    if (loggingEnabled) {
+      log(OWNER_MAIN, VERB_ERRORED, action.request.logId());
+    }
+  }
+}
+</code></pre><p>最终会回调 Action 的<code>complete()</code>方法，我们使用的是 ImageViewAction 类，那么我们就直接看这个类的方法：<br>        @Override public void complete(Bitmap result, Picasso.LoadedFrom from) {<br>        //如果结果为 null，抛出异常<br>        if (result == null) {<br>          throw new AssertionError(<br>              String.format(“Attempted to complete action with no result!\n%s”, this));<br>        }<br>        //拿到 ImageView 这个对象<br>        ImageView target = this.target.get();<br>        //如果这个对象为null，则直接返回<br>        if (target == null) {<br>          return;<br>        }<br>        //调用 PicassoDrawable.setBitmap 给我们的 target 设置图片<br>        Context context = picasso.context;<br>        boolean indicatorsEnabled = picasso.indicatorsEnabled;<br>        PicassoDrawable.setBitmap(target, context, result, from, noFade, indicatorsEnabled);</p>
+<pre><code>  if (callback != null) {
+    callback.onSuccess();
+  }
+}
+
+  static void setBitmap(ImageView target, Context context, Bitmap bitmap,
+  Picasso.LoadedFrom loadedFrom, boolean noFade, boolean debugging) {
+  Drawable placeholder = target.getDrawable();
+  if (placeholder instanceof AnimationDrawable) {
+    ((AnimationDrawable) placeholder).stop();
+  }
+  PicassoDrawable drawable =
+      new PicassoDrawable(context, bitmap, placeholder, loadedFrom, noFade, debugging);
+  target.setImageDrawable(drawable);
+}
+</code></pre><p>可以看到，最后仍是调用了 ImageView 的<code>setImageDrawable</code>方法，将图片设置给 ImageView。</p>
+<h1 id="步骤三：总结"><a href="#步骤三：总结" class="headerlink" title="步骤三：总结"></a>步骤三：总结</h1><p>这是我自己独立分析源码的第二篇，跟 Volley 相比，Picasso 还是相当有难度的，分析过程中也借鉴了很多网上的博客，感觉自己真的成长了很多，也学到了很多东西。下一篇，我们来解析一下事件总线 EventBus3.0，敬请期待啦啦啦啦。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/02/volley 源码解析/" rel="next" title="volley源码解析">
+                <i class="fa fa-chevron-left"></i> volley源码解析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/08/07/eventBus 源码解析/" rel="prev" title="eventBus_源码解析">
+                eventBus_源码解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">eaglewang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categroies/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤一：使用"><span class="nav-number">1.</span> <span class="nav-text">步骤一：使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤二：分析调用流程"><span class="nav-number">2.</span> <span class="nav-text">步骤二：分析调用流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤三：总结"><span class="nav-number">3.</span> <span class="nav-text">步骤三：总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">eaglewang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

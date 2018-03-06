@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="最近公司里面人事变动比较大，自己的事情也比较多，耽误了自己写博客的时间，甚感遗憾，忙里偷闲总算有时间给大家带来第三篇框架源码的解析了，大家加油！ 步骤一、使用老规矩，第一步带来 EventBus 的使用方法： @Override protected void onCreate(Bundle savedInstanceS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="eventBus_源码解析">
+<meta property="og:url" content="eaglewangl.github.io/2017/08/07/eventBus 源码解析/index.html">
+<meta property="og:site_name" content="eaglewang&#39;s blog">
+<meta property="og:description" content="最近公司里面人事变动比较大，自己的事情也比较多，耽误了自己写博客的时间，甚感遗憾，忙里偷闲总算有时间给大家带来第三篇框架源码的解析了，大家加油！ 步骤一、使用老规矩，第一步带来 EventBus 的使用方法： @Override protected void onCreate(Bundle savedInstanceState) {     super.onCreate(savedInstance">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://skykai521.github.io/image/register-flow-chart.png">
+<meta property="og:image" content="http://skykai521.github.io/image/post-flow-chart.png">
+<meta property="og:updated_time" content="2018-01-21T11:29:35.151Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="eventBus_源码解析">
+<meta name="twitter:description" content="最近公司里面人事变动比较大，自己的事情也比较多，耽误了自己写博客的时间，甚感遗憾，忙里偷闲总算有时间给大家带来第三篇框架源码的解析了，大家加油！ 步骤一、使用老规矩，第一步带来 EventBus 的使用方法： @Override protected void onCreate(Bundle savedInstanceState) {     super.onCreate(savedInstance">
+<meta name="twitter:image" content="http://skykai521.github.io/image/register-flow-chart.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="eaglewangl.github.io/2017/08/07/eventBus 源码解析/"/>
+
+
+
+
+
+  <title>eventBus_源码解析 | eaglewang's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">eaglewang's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="eaglewangl.github.io/2017/08/07/eventBus 源码解析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="eaglewang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="eaglewang's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">eventBus_源码解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-07T20:34:44+08:00">
+                2017-08-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android-源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Android 源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近公司里面人事变动比较大，自己的事情也比较多，耽误了自己写博客的时间，甚感遗憾，忙里偷闲总算有时间给大家带来第三篇框架源码的解析了，大家加油！</p>
+<h1 id="步骤一、使用"><a href="#步骤一、使用" class="headerlink" title="步骤一、使用"></a>步骤一、使用</h1><p>老规矩，第一步带来 EventBus 的使用方法：</p>
+<pre><code>@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_test_event_bus);
+    //注册订阅者
+    EventBus.getDefault().register(this);
+    tvTestEvent.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            //发送事件
+            EventBus.getDefault().post(&quot;hello&quot;);
+        }
+    });
+
+}
+
+/**
+ * 订阅者接收事件时做的方法
+ * @param str 传递的消息
+ */
+@Subscribe(threadMode = ThreadMode.MAIN , priority = 10 , sticky = false)
+public void TestEvent(String str){
+    Toast.makeText(this , str , Toast.LENGTH_SHORT).show();
+}
+
+
+@Override
+protected void onStop() {
+    super.onStop();
+    //解除注册
+    EventBus.getDefault().unregister(this);
+}
+</code></pre><p>以上就是 EventBus 的简单使用了，可以看到，代码相比之前我们的接口回调和 Handler 在进程间传递消息的代码来说，实在是简洁了不少，那我们接下来就来看看到底 EventBus 做了什么样的处理，让我们能这么简单的在进程和线程间通信呢？我们来看看源码分析吧。</p>
+<h1 id="步骤二、代码分析"><a href="#步骤二、代码分析" class="headerlink" title="步骤二、代码分析"></a>步骤二、代码分析</h1><p>源码分析还是之前的老套路，从调用过程来看看整体的流程，那么我们首先分析第一段代码 <code>EventBus.getDefault()</code>：</p>
+<pre><code>    public static EventBus getDefault() {
+    if (defaultInstance == null) {
+        synchronized (EventBus.class) {
+            if (defaultInstance == null) {
+                defaultInstance = new EventBus();
+            }
+        }
+    }
+    return defaultInstance;
+}
+</code></pre><p>一个很常见的单例模式，双重锁机制进一步保证了只有一个实例对象，然后我们看到这里调用了 EventBus 自己的构造方法，我们来跟进去看看：</p>
+<pre><code>public EventBus() {
+    this(DEFAULT_BUILDER);
+}
+
+EventBus(EventBusBuilder builder) {
+    //以订阅的事件为键，以订阅该事件的所有订阅者的集合为值的一个map
+    //private final Map&lt;Class&lt;?&gt;, CopyOnWriteArrayList&lt;Subscription&gt;&gt; subscriptionsByEventType
+    subscriptionsByEventType = new HashMap&lt;&gt;();
+    //以订阅者为键，以这个订阅者订阅的事件集合为值的一个map
+    //private final Map&lt;Object, List&lt;Class&lt;?&gt;&gt;&gt; typesBySubscriber
+    typesBySubscriber = new HashMap&lt;&gt;();
+    //以粘性事件的class对象为键，以粘性事件为值的一个map
+    //private final Map&lt;Class&lt;?&gt;, Object&gt; stickyEvents
+    stickyEvents = new ConcurrentHashMap&lt;&gt;();
+    //分发主线程的 Poster
+    mainThreadPoster = new HandlerPoster(this, Looper.getMainLooper(), 10);
+    //分发后台任务线程的 Poster
+    backgroundPoster = new BackgroundPoster(this);
+    //分发异步任务线程的 Poster
+    asyncPoster = new AsyncPoster(this);
+    //根据是否有索引拿到索引数量
+    indexCount = builder.subscriberInfoIndexes != null ? builder.subscriberInfoIndexes.size() : 0;
+    //该类主要是为了找到 订阅者订阅的方法的类
+    subscriberMethodFinder = new SubscriberMethodFinder(builder.subscriberInfoIndexes,
+            builder.strictMethodVerification, builder.ignoreGeneratedIndex);
+    logSubscriberExceptions = builder.logSubscriberExceptions;
+    logNoSubscriberMessages = builder.logNoSubscriberMessages;
+    sendSubscriberExceptionEvent = builder.sendSubscriberExceptionEvent;
+    sendNoSubscriberEvent = builder.sendNoSubscriberEvent;
+    throwSubscriberException = builder.throwSubscriberException;
+    eventInheritance = builder.eventInheritance;
+    executorService = builder.executorService;
+}
+</code></pre><p>好了，这一下的话，总算是把 EventBus 这辆消息的公交车给创建出来了，接下来就是注册<code>register()</code>方法了，我们看看代码是怎么实现的：</p>
+<pre><code> /**
+ * Registers the given subscriber to receive events. Subscribers must call {@link #unregister(Object)} once they
+ * are no longer interested in receiving events.
+ * &lt;p/&gt;
+ * Subscribers have event handling methods that must be annotated by {@link Subscribe}.
+ * The {@link Subscribe} annotation also allows configuration like {@link
+ * ThreadMode} and priority.
+ */
+public void register(Object subscriber) {
+    //根据传递进来的参数得到这个参数的类（EventBus中用到很多关于反射的知识，如果有不太了解反射机制的同学，需要去看看反射的内容）
+    Class&lt;?&gt; subscriberClass = subscriber.getClass();
+    //根据我们上文提到的这个类去找到这个订阅类中的所有订阅方法
+    List&lt;SubscriberMethod&gt; subscriberMethods = subscriberMethodFinder.findSubscriberMethods(subscriberClass);
+    synchronized (this) {
+        for (SubscriberMethod subscriberMethod : subscriberMethods) {
+            //找到所有的订阅方法之后，循环去subscribe
+            subscribe(subscriber, subscriberMethod);
+        }
+    }
+}
+</code></pre><p>tips:其实 EventBus 的注释写的不错的，有兴趣的同学可以仔细看看他们的注释，相信也会有一番体会；<br>我们回到正题，那么我现在需要去看看是怎么找到这个订阅者的所有订阅的方法的呢，来看代码：</p>
+<pre><code>    List&lt;SubscriberMethod&gt; findSubscriberMethods(Class&lt;?&gt; subscriberClass) {
+    //先去缓存中以这个订阅者为键名去查找是否已经存在过相应的订阅方法，如果存在就直接返回
+    List&lt;SubscriberMethod&gt; subscriberMethods = METHOD_CACHE.get(subscriberClass);
+    if (subscriberMethods != null) {
+        return subscriberMethods;
+    }
+    //如果在缓存中不存在，就会通过反射或者通过注解生成的索引去查找
+    if (ignoreGeneratedIndex) {
+        subscriberMethods = findUsingReflection(subscriberClass);
+    } else {
+        subscriberMethods = findUsingInfo(subscriberClass);
+    }
+    //走完上面的 if 判断之后，我们判断这个集合是否存在数据，如果不存在则抛出异常，否则就降这个方法存入缓存，并且返回
+    if (subscriberMethods.isEmpty()) {
+        throw new EventBusException(&quot;Subscriber &quot; + subscriberClass
+                + &quot; and its super classes have no public methods with the @Subscribe annotation&quot;);
+    } else {
+        METHOD_CACHE.put(subscriberClass, subscriberMethods);
+        return subscriberMethods;
+    }
+}
+</code></pre><p>可以看到，获得这个订阅者的所有订阅方法有两种，根据方法名来看，第一种是通过反射机制；第二种就是 EventBus 做的一个优化，使用编译时注解生成索引，根据索引类来得到所有这个类的订阅方法，我们针对两种情况来分析一下。</p>
+<p>首先第一种，根据反射对象来获得所有订阅方法，我们来看一下代码</p>
+<pre><code>private List&lt;SubscriberMethod&gt; findUsingReflection(Class&lt;?&gt; subscriberClass) {
+    //前两句代码都是将 findState 这个类实例化和初始化数据，这里设计者用了一个循环使用的类似于 线程池的东西，每次需要的时候先去 pool 里面取，如果都没有才会去创建对象，优雅的代码。
+    FindState findState = prepareFindState();
+    findState.initForSubscriber(subscriberClass);
+    while (findState.clazz != null) {
+        //先找自己这个类的方法
+        findUsingReflectionInSingleClass(findState);
+        //然后会去找这个类的父类，看父类有没有注册过的方法
+        findState.moveToSuperclass();
+    }
+    //返回找到的数据并将这个池中的对象进行释放
+    return getMethodsAndRelease(findState);
+}
+</code></pre><p>可以看出，主要的逻辑应该还是在 <code>findUsingReflectionInSingleClass(findState)</code> 这个方法里面的，我们继续探索。</p>
+<pre><code>    private void findUsingReflectionInSingleClass(FindState findState) {
+    //承装方法的数组
+    Method[] methods;
+    try {
+        // This is faster than getMethods, especially when subscribers are fat classes like Activities
+        //通过反射找到所有声明的方法
+        methods = findState.clazz.getDeclaredMethods();
+    } catch (Throwable th) {
+        // Workaround for java.lang.NoClassDefFoundError, see https://github.com/greenrobot/EventBus/issues/149
+        methods = findState.clazz.getMethods();
+        findState.skipSuperClasses = true;
+    }
+    //循环方法数组
+    for (Method method : methods) {
+        //拿到这个方法的权限修饰符
+        int modifiers = method.getModifiers();
+        //只有权限修饰符是 Public 并且这时是不能忽视访问权限的时候，继续往下执行
+        if ((modifiers &amp; Modifier.PUBLIC) != 0 &amp;&amp; (modifiers &amp; MODIFIERS_IGNORE) == 0) {
+            //拿到这个方法的参数列表
+            Class&lt;?&gt;[] parameterTypes = method.getParameterTypes();
+            //只有参数列表的长度为1时，去拿这个方法的注解（我们给的@Subscribe注解是必须要的）
+            if (parameterTypes.length == 1) {
+                Subscribe subscribeAnnotation = method.getAnnotation(Subscribe.class);
+                //如果有我们的注解，其实就相当于找到这个订阅方法了
+                if (subscribeAnnotation != null) {
+                    //拿到我们传递的消息的类型
+                    Class&lt;?&gt; eventType = parameterTypes[0];
+                    //检查这个类型是否被添加过，如果被添加过
+                    if (findState.checkAdd(method, eventType)) {
+                        //拿到我们给这个方法写的所在线程
+                        ThreadMode threadMode = subscribeAnnotation.threadMode();
+                        //讲所有用到的方法，传递的事件类型，线程，优先级，是否粘性作为参数，传递给findstate这个类的集合中
+                        findState.subscriberMethods.add(new SubscriberMethod(method, eventType, threadMode,
+                                subscribeAnnotation.priority(), subscribeAnnotation.sticky()));
+                    }
+                }
+            } else if (strictMethodVerification &amp;&amp; method.isAnnotationPresent(Subscribe.class)) {
+                String methodName = method.getDeclaringClass().getName() + &quot;.&quot; + method.getName();
+                throw new EventBusException(&quot;@Subscribe method &quot; + methodName +
+                        &quot;must have exactly 1 parameter but has &quot; + parameterTypes.length);
+            }
+        } else if (strictMethodVerification &amp;&amp; method.isAnnotationPresent(Subscribe.class)) {
+            String methodName = method.getDeclaringClass().getName() + &quot;.&quot; + method.getName();
+            throw new EventBusException(methodName +
+                    &quot; is a illegal @Subscribe method: must be public, non-static, and non-abstract&quot;);
+        }
+    }
+}
+</code></pre><p>代码较长，不过逻辑很清楚，我在代码片段上都写了注释，应该能明白，不过还是总结一下，主要是通过反射的方法，然后拿到每个方法的权限修饰符，并且只有参数个数是1的时候，才会做之后的操作。然后又去到这个类的父类，重新来一遍这个流程，直到没有父类，最后将查到的方法返回，这个根据反射查找的流程也就结束了；接下来我们看看根据注解找找方法是怎么找的：</p>
+<pre><code> private List&lt;SubscriberMethod&gt; findUsingInfo(Class&lt;?&gt; subscriberClass) {
+    //前两步和根据反射找没什么区别
+    FindState findState = prepareFindState();
+    findState.initForSubscriber(subscriberClass);
+    while (findState.clazz != null) {
+        //这里直接调用了一个方法 getSubscriberInfo()
+        findState.subscriberInfo = getSubscriberInfo(findState);
+        //如果这个方法不是null ， 就去拿里面的订阅者方法
+        if (findState.subscriberInfo != null) {
+            SubscriberMethod[] array = findState.subscriberInfo.getSubscriberMethods();
+            //遍历这个数组，如果这个被添加过，就在查找到的方法里面添加这个方法
+            for (SubscriberMethod subscriberMethod : array) {
+                if (findState.checkAdd(subscriberMethod.method, subscriberMethod.eventType)) {
+                    findState.subscriberMethods.add(subscriberMethod);
+                }
+            }
+        } else {
+            //否则使用反射去寻找
+            findUsingReflectionInSingleClass(findState);
+        }
+        //去父类
+        findState.moveToSuperclass();
+    }
+    return getMethodsAndRelease(findState);
+}
+
+private SubscriberInfo getSubscriberInfo(FindState findState) {
+    //如果这个类可以根据索引得到订阅者的信息，就直接通过订阅者的信息返回数据
+    if (findState.subscriberInfo != null &amp;&amp; findState.subscriberInfo.getSuperSubscriberInfo() != null) {
+        SubscriberInfo superclassInfo = findState.subscriberInfo.getSuperSubscriberInfo();
+        if (findState.clazz == superclassInfo.getSubscriberClass()) {
+            return superclassInfo;
+        }
+    }
+    if (subscriberInfoIndexes != null) {
+        for (SubscriberInfoIndex index : subscriberInfoIndexes) {
+            SubscriberInfo info = index.getSubscriberInfo(findState.clazz);
+            if (info != null) {
+                return info;
+            }
+        }
+    }
+    return null;
+}
+</code></pre><p>是不是有点懵逼了，我点进去这个方法是如下接口啊，也没有默认实现这个接口的类呀，那这是怎么回事呢？？<br>    public interface SubscriberInfo {<br>    Class&lt;?&gt; getSubscriberClass();</p>
+<pre><code>SubscriberMethod[] getSubscriberMethods();
+
+SubscriberInfo getSuperSubscriberInfo();
+
+boolean shouldCheckSuperclass();
+}
+</code></pre><p>事实上，这是 EventBus 3.x 做的一个优化，如上文所说，根据注解生成索引，但是这不是必选项，EventBus 也不会默认给我们配置，我在网上找了一个生成的索引类。</p>
+<pre><code>/**
+ * This class is generated by EventBus, do not edit.
+ */
+public class MyEventBusIndex implements SubscriberInfoIndex {
+    private static final Map&lt;Class&lt;?&gt;, SubscriberInfo&gt; SUBSCRIBER_INDEX;
+
+    static {
+        SUBSCRIBER_INDEX = new HashMap&lt;Class&lt;?&gt;, SubscriberInfo&gt;();
+
+        putIndex(new SimpleSubscriberInfo(org.greenrobot.eventbusperf.testsubject.PerfTestEventBus.SubscriberClassEventBusAsync.class,
+                true, new SubscriberMethodInfo[]{
+                new SubscriberMethodInfo(&quot;onEventAsync&quot;, TestEvent.class, ThreadMode.ASYNC),
+        }));
+
+        putIndex(new SimpleSubscriberInfo(TestRunnerActivity.class, true, new SubscriberMethodInfo[]{
+                new SubscriberMethodInfo(&quot;onEventMainThread&quot;, TestFinishedEvent.class, ThreadMode.MAIN),
+        }));
+    }
+
+    private static void putIndex(SubscriberInfo info) {
+        SUBSCRIBER_INDEX.put(info.getSubscriberClass(), info);
+    }
+
+    @Override
+    public SubscriberInfo getSubscriberInfo(Class&lt;?&gt; subscriberClass) {
+        SubscriberInfo info = SUBSCRIBER_INDEX.get(subscriberClass);
+        if (info != null) {
+            return info;
+        } else {
+            return null;
+        }
+    }
+}
+</code></pre><p>首先要注意的是，注释有一句话，这是通过 EventBus 生成的，不要去编辑他，是不是类似于 Androird Studio 自动生成的 aidl 文件一样，都是 build 过一次之后才会出现的，这个就是运行时编译的。我们来分析一下这个类，首先它是实现了我们上文提到的那个 Index 接口的，所以在将这个索引添加给 EventBus 之后，就可以通过这个索引找我们的订阅者了，里面的方法没什么特别的，无外乎存 index ， 取 index ， 取符合数据的所有订阅者信息而已，这样一样，两个查找订阅者方法的方法就分析完了（有一点点绕，需要自己在回想一下）</p>
+<p>接下来还有最后一个步骤，注册的过程就基本讲完了 orz ，在上文找到方法之后，将所有的方法进行一个订阅 <code>subscribe()</code>，我们看看这个方法的实现：</p>
+<pre><code>// Must be called in synchronized block
+private void subscribe(Object subscriber, SubscriberMethod subscriberMethod) {
+    //获得传递的消息类型
+    Class&lt;?&gt; eventType = subscriberMethod.eventType;
+    //根据传递来的参数生成一个 Subscription 对象
+    Subscription newSubscription = new Subscription(subscriber, subscriberMethod);
+    //根据传递的消息获取相关的订阅方法，判断是否之前已经存在这个 Subscription 对象，如果存在就抛出异常
+    CopyOnWriteArrayList&lt;Subscription&gt; subscriptions = subscriptionsByEventType.get(eventType);
+    if (subscriptions == null) {
+        subscriptions = new CopyOnWriteArrayList&lt;&gt;();
+        subscriptionsByEventType.put(eventType, subscriptions);
+    } else {
+        if (subscriptions.contains(newSubscription)) {
+            throw new EventBusException(&quot;Subscriber &quot; + subscriber.getClass() + &quot; already registered to event &quot;
+                    + eventType);
+        }
+    }
+    //循环这个集合
+    int size = subscriptions.size();
+    for (int i = 0; i &lt;= size; i++) {
+        根据我们给方法的优先级来添加消息对象
+        if (i == size || subscriberMethod.priority &gt; subscriptions.get(i).subscriberMethod.priority) {
+            subscriptions.add(i, newSubscription);
+            break;
+        }
+    }
+    //将订阅者对象以及订阅的事件保存到typesBySubscriber里.
+    List&lt;Class&lt;?&gt;&gt; subscribedEvents = typesBySubscriber.get(subscriber);
+    if (subscribedEvents == null) {
+        subscribedEvents = new ArrayList&lt;&gt;();
+        typesBySubscriber.put(subscriber, subscribedEvents);
+    }
+    subscribedEvents.add(eventType);
+    //如果这个对象是粘性事件，立即分发这个事件
+    if (subscriberMethod.sticky) {
+        if (eventInheritance) {
+            ////eventInheritance 表示是否分发订阅了响应事件类父类事件的方法
+            // Existing sticky events of all subclasses of eventType have to be considered.
+            // Note: Iterating over all events may be inefficient with lots of sticky events,
+            // thus data structure should be changed to allow a more efficient lookup
+            // (e.g. an additional map storing sub classes of super classes: Class -&gt; List&lt;Class&gt;).
+            Set&lt;Map.Entry&lt;Class&lt;?&gt;, Object&gt;&gt; entries = stickyEvents.entrySet();
+            for (Map.Entry&lt;Class&lt;?&gt;, Object&gt; entry : entries) {
+                Class&lt;?&gt; candidateEventType = entry.getKey();
+                if (eventType.isAssignableFrom(candidateEventType)) {
+                    Object stickyEvent = entry.getValue();
+                    checkPostStickyEventToSubscription(newSubscription, stickyEvent);
+                }
+            }
+        } else {
+            Object stickyEvent = stickyEvents.get(eventType);
+            checkPostStickyEventToSubscription(newSubscription, stickyEvent);
+        }
+    }
+}
+</code></pre><p>好了，注册整个流程已经到此结束，我们需要一个小总结，来明白注册过程到底干了什么事情。</p>
+<p><img src="http://skykai521.github.io/image/register-flow-chart.png" alt=""></p>
+<p>接下来就是我们的<code>post()</code>方法了，加油哟。</p>
+<pre><code>/** Posts the given event to the event bus. */
+public void post(Object event) {
+    //这里面用到线程本地变量这个概念，对每一个不同的线程来说，变量是不同的，这样能很好区分不同线程中相同变量名的数据。
+    //得到当前线程的 Posting 状态
+    PostingThreadState postingState = currentPostingThreadState.get();
+    //获取当前线程的事件队列
+    List&lt;Object&gt; eventQueue = postingState.eventQueue;
+    eventQueue.add(event);
+    //如果当前线程的 Posting 状态不是正在分发
+    if (!postingState.isPosting) {
+        //判断是否是主线程
+        postingState.isMainThread = Looper.getMainLooper() == Looper.myLooper();
+        //修改 Posting 状态
+        postingState.isPosting = true;
+        //如果被取消，则抛出异常
+        if (postingState.canceled) {
+            throw new EventBusException(&quot;Internal error. Abort state was not reset&quot;);
+        }
+        try {
+            //只有队列中还有事件，就一直发送事件
+            while (!eventQueue.isEmpty()) {
+                postSingleEvent(eventQueue.remove(0), postingState);
+            }
+        } finally {
+            postingState.isPosting = false;
+            postingState.isMainThread = false;
+        }
+    }
+}
+</code></pre><p>其实还是通过     <code>postSingleEvent(eventQueue.remove(0), postingState);</code>这个方法来做的事件分发，我们跟踪一下代码</p>
+<pre><code>private void postSingleEvent(Object event, PostingThreadState postingState) throws Error {
+    //得到传递消息的类型
+    Class&lt;?&gt; eventClass = event.getClass();
+    boolean subscriptionFound = false;
+    //是否触发了订阅该事件的父类，以及接口的响应方法
+    if (eventInheritance) {
+        //查找自己本身和所有的接口和父类
+        List&lt;Class&lt;?&gt;&gt; eventTypes = lookupAllEventTypes(eventClass);
+        //循环所有的postSingleEventForEventType
+        int countTypes = eventTypes.size();
+        for (int h = 0; h &lt; countTypes; h++) {
+            Class&lt;?&gt; clazz = eventTypes.get(h);
+            //逻辑或，有一个 True 就为true
+            subscriptionFound |= postSingleEventForEventType(event, postingState, clazz);
+        }
+    } else {
+        //post单个
+        subscriptionFound = postSingleEventForEventType(event, postingState, eventClass);
+    }
+    if (!subscriptionFound) {
+        if (logNoSubscriberMessages) {
+            Log.d(TAG, &quot;No subscribers registered for event &quot; + eventClass);
+        }
+        if (sendNoSubscriberEvent &amp;&amp; eventClass != NoSubscriberEvent.class &amp;&amp;
+                eventClass != SubscriberExceptionEvent.class) {
+            post(new NoSubscriberEvent(this, event));
+        }
+    }
+}
+</code></pre><p>应该所有的事件分发都是通过<code>postSingleEventForEventType</code>这个方法来实现的，</p>
+<pre><code>private boolean postSingleEventForEventType(Object event, PostingThreadState postingState, Class&lt;?&gt; eventClass) {
+    CopyOnWriteArrayList&lt;Subscription&gt; subscriptions;
+    synchronized (this) {
+        //获得订阅了这个事件的 subscription 列表
+        subscriptions = subscriptionsByEventType.get(eventClass);
+    }
+    循环列表，调用 postToSubscription这个方法
+    if (subscriptions != null &amp;&amp; !subscriptions.isEmpty()) {
+        for (Subscription subscription : subscriptions) {
+            postingState.event = event;
+            postingState.subscription = subscription;
+            //是否被中断
+            boolean aborted = false;
+            try {
+                postToSubscription(subscription, event, postingState.isMainThread);
+                aborted = postingState.canceled;
+            } finally {
+                postingState.event = null;
+                postingState.subscription = null;
+                postingState.canceled = false;
+            }
+            if (aborted) {
+                break;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+private void postToSubscription(Subscription subscription, Object event, boolean isMainThread) {
+    switch (subscription.subscriberMethod.threadMode) {
+        //根据订阅者规定的订阅线程来决定在哪个线程执行
+        case POSTING:
+            //在当前线程直接执行
+            invokeSubscriber(subscription, event);
+            break;
+        case MAIN:
+            //如果规定主线程，先判断当前是否是主线程，如果不是，则添加到主线程的分发队列中
+            if (isMainThread) {
+                invokeSubscriber(subscription, event);
+            } else {
+                mainThreadPoster.enqueue(subscription, event);
+            }
+            break;
+        case BACKGROUND:
+            //如果规定子线程，先判断当前是否是子线程，如果不是，则添加到子线程的分发队列中
+            if (isMainThread) {
+                backgroundPoster.enqueue(subscription, event);
+            } else {
+                invokeSubscriber(subscription, event);
+            }
+            break;
+        case ASYNC:
+            //如果规定必须重开一个线程执行，则直接将消息事件添加到异步线程的分发队列中
+            asyncPoster.enqueue(subscription, event);
+            break;
+        default:
+            throw new IllegalStateException(&quot;Unknown thread mode: &quot; + subscription.subscriberMethod.threadMode);
+    }
+}
+</code></pre><p>最后的 <code>invokeSubscriber()</code>方法就是找到订阅者方法，调用这个方法的 invoke方法，将传递的事件类型当成参数传递给方法里面：</p>
+<pre><code>void invokeSubscriber(Subscription subscription, Object event) {
+    try {
+        subscription.subscriberMethod.method.invoke(subscription.subscriber, event);
+    } catch (InvocationTargetException e) {
+        handleSubscriberException(subscription, event, e.getCause());
+    } catch (IllegalAccessException e) {
+        throw new IllegalStateException(&quot;Unexpected exception&quot;, e);
+    }
+}
+</code></pre><p>好了，发送过程也到此为止，我们也来梳理一下思路：</p>
+<p><img src="http://skykai521.github.io/image/post-flow-chart.png" alt=""></p>
+<p>最后，终于我们想要解除注册了，来看看方法：</p>
+<pre><code>/** Unregisters the given subscriber from all event classes. */
+public synchronized void unregister(Object subscriber) {
+    //前文已经提到过，有一个集合用于解除注册的，我们现在看到了吧，根据订阅者去找到所有的订阅事件
+    List&lt;Class&lt;?&gt;&gt; subscribedTypes = typesBySubscriber.get(subscriber);
+    //循环这个订阅者事件，将他们解除注册
+    if (subscribedTypes != null) {
+        for (Class&lt;?&gt; eventType : subscribedTypes) {
+            unsubscribeByEventType(subscriber, eventType);
+        }
+        //在这个集合里面讲解除了注册的订阅者移除
+        typesBySubscriber.remove(subscriber);
+    } else {
+        Log.w(TAG, &quot;Subscriber to unregister was not registered before: &quot; + subscriber.getClass());
+    }
+}
+
+/** Only updates subscriptionsByEventType, not typesBySubscriber! Caller must update typesBySubscriber. */
+private void unsubscribeByEventType(Object subscriber, Class&lt;?&gt; eventType) {
+    //根据事件类型找到所有订阅了这个事件的订阅者信息
+    List&lt;Subscription&gt; subscriptions = subscriptionsByEventType.get(eventType);
+    if (subscriptions != null) {
+        int size = subscriptions.size();
+        //取消订阅
+        for (int i = 0; i &lt; size; i++) {
+            Subscription subscription = subscriptions.get(i);
+            if (subscription.subscriber == subscriber) {
+                subscription.active = false;
+                subscriptions.remove(i);
+                i--;
+                size--;
+            }
+        }
+    }
+}
+</code></pre><p>其实就是将之前存有订阅者信息和订阅者事件的集合中都删除了这个订阅者信息。</p>
+<p>分析完了~</p>
+<h1 id="步骤三、总结"><a href="#步骤三、总结" class="headerlink" title="步骤三、总结"></a>步骤三、总结</h1><p>首先有点抱歉，本来自己想的是平均两周分析一篇源码的，但是由于最近有点事情，导致这一片文章拖了很久，不保证以后不会再发生这样的事情，但是我会尽力把时间省出来的~</p>
+<p>现在来说说 EventBus 这个框架吧，网上其实对他还是褒贬不一的，不过就我而言，还是极大的方便了开发的，少了那么多接口回调和 handler 通信简直不要太开心好吗。网上对它的槽点主要在于性能，因为是通过反射来做的，肯定会消耗不少的性能，不过greenrobot这家公司是真的良心，接下来的3.0版本通过编译时注解可以生成index类，提高了性能，而且还有用到缓存的地方，我是很喜欢的。</p>
+<p>接下来就是预告了，接下来可能会来一波网络框架的分析，还在犹豫是 okHttp 还是 Retrofit,敬请期待。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/18/Picasso 源码解析/" rel="next" title="Picasso 源码解析">
+                <i class="fa fa-chevron-left"></i> Picasso 源码解析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/03/OkHttp 源码解析一之请求过程初探/" rel="prev" title="OkHttp源码解析">
+                OkHttp源码解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">eaglewang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categroies/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤一、使用"><span class="nav-number">1.</span> <span class="nav-text">步骤一、使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤二、代码分析"><span class="nav-number">2.</span> <span class="nav-text">步骤二、代码分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤三、总结"><span class="nav-number">3.</span> <span class="nav-text">步骤三、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">eaglewang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

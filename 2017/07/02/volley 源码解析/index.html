@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="读源码，一步一步来。 步骤一：使用使用步骤：  使用 Volley 类中自带的newRequestQueue(context) 方法创建一个请求队列； 根据需要创建一个请求对象： ​ StringRequest testStringRequest = new StringRequest(url, new Respons">
+<meta property="og:type" content="article">
+<meta property="og:title" content="volley源码解析">
+<meta property="og:url" content="eaglewangl.github.io/2017/07/02/volley 源码解析/index.html">
+<meta property="og:site_name" content="eaglewang&#39;s blog">
+<meta property="og:description" content="读源码，一步一步来。 步骤一：使用使用步骤：  使用 Volley 类中自带的newRequestQueue(context) 方法创建一个请求队列； 根据需要创建一个请求对象： ​ StringRequest testStringRequest = new StringRequest(url, new Response.Listener() {    @Override     public v">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-01-21T11:31:07.479Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="volley源码解析">
+<meta name="twitter:description" content="读源码，一步一步来。 步骤一：使用使用步骤：  使用 Volley 类中自带的newRequestQueue(context) 方法创建一个请求队列； 根据需要创建一个请求对象： ​ StringRequest testStringRequest = new StringRequest(url, new Response.Listener() {    @Override     public v">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="eaglewangl.github.io/2017/07/02/volley 源码解析/"/>
+
+
+
+
+
+  <title>volley源码解析 | eaglewang's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">eaglewang's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="eaglewangl.github.io/2017/07/02/volley 源码解析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="eaglewang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="eaglewang's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">volley源码解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-07-02T09:15:03+08:00">
+                2017-07-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android-源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Android 源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>读源码，一步一步来。</p>
+<h1 id="步骤一：使用"><a href="#步骤一：使用" class="headerlink" title="步骤一：使用"></a>步骤一：使用</h1><p>使用步骤：</p>
+<ul>
+<li>使用 Volley 类中自带的<code>newRequestQueue(context)</code> 方法创建一个请求队列；</li>
+<li>根据需要创建一个请求对象：<br> ​<br> StringRequest testStringRequest = new StringRequest(url, new Response.Listener<string>() {<pre><code>    @Override
+    public void onResponse(String response) {
+        Log.d(&quot;test&quot; , &quot;succes&quot;);
+    }
+}, new Response.ErrorListener() {
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        Log.d(&quot;test&quot; , &quot;error&quot;);
+    }
+});
+</code></pre></string></li>
+<li><p>将创建的请求对象添加到请求队列中，当请求成功或者失败会回调我们写的接口方法中。</p>
+<p> mQueue.add(testStringRequest);</p>
+<p> 上面介绍的是最简单的一种 GET 请求方式，当需要添加参数时，可以使用另外一个构造方法来构造这个请求对象，有一点需要注意的是，Volley 本身是不提供设置 POST 参数的方法的，需要我们对这个请求中的一个方法进行重写，例子如下：</p>
+<pre><code>Response.Listener&lt;String&gt; mSuccess = new Response.Listener&lt;String&gt;() {
+    @Override
+    public void onResponse(String response) {
+        Log.d(&quot;test&quot; , &quot;succes&quot;);
+    }
+};
+Response.ErrorListener mError = new Response.ErrorListener() {
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        Log.d(&quot;test&quot; , &quot;error&quot;);
+    }
+};
+StringRequest testStringRequest = new StringRequest(Request.Method.POST, url, mSuccess, mError){
+    @Override
+    protected Map&lt;String, String&gt; getParams() throws AuthFailureError {
+        Map&lt;String , String&gt; mParams = new HashMap&lt;&gt;();
+        mParams.put(&quot;parama1&quot; , &quot;test1&quot;);
+        mParams.put(&quot;parama2&quot; , &quot;test2&quot;);
+        return mParams;
+    }
+};
+</code></pre></li>
+</ul>
+<p>当然，还有其他的请求，比如 Volley 自带的还有 ImageRequest 以及 JsonRequest 等等，这些的调用方式都没有太大的差别，接下来我们就来看看到底是怎样进行网络请求，并将结果回调到我们的主页面的。</p>
+<h1 id="步骤二：了解调用流程"><a href="#步骤二：了解调用流程" class="headerlink" title="步骤二：了解调用流程"></a>步骤二：了解调用流程</h1><p>还记得我们的使用步骤一吗：创建一个请求队列，让我们进去看看到底做了什么。<br>​<br>        RequestQueue mQue = Volley.newRequestQueue(context);<br>跟踪一下代码，</p>
+<pre><code>    public static RequestQueue newRequestQueue(Context context) {
+
+        return newRequestQueue(context, null);
+}
+    public static RequestQueue newRequestQueue(Context context, HttpStack stack){
+
+        return newRequestQueue(context, stack, -1);
+}
+    public static RequestQueue newRequestQueue(Context context, int maxDiskCacheBytes) {
+
+        return newRequestQueue(context, null, maxDiskCacheBytes);
+}
+
+    public static RequestQueue newRequestQueue(Context context, HttpStack stack, int maxDiskCacheBytes) {
+
+    File cacheDir = new File(context.getCacheDir(), DEFAULT_CACHE_DIR);
+
+    String userAgent = &quot;volley/0&quot;;
+    try {
+        String packageName = context.getPackageName();
+        PackageInfo info = context.getPackageManager().getPackageInfo(packageName, 0);
+        userAgent = packageName + &quot;/&quot; + info.versionCode;
+    } catch (NameNotFoundException e) {
+    }
+
+    if (stack == null) {
+        if (Build.VERSION.SDK_INT &gt;= 9) {
+            stack = new HurlStack();
+        } else {
+            // Prior to Gingerbread, HttpUrlConnection was unreliable.
+            // See: http://android-developers.blogspot.com/2011/09/androids-http-clients.html
+            stack = new HttpClientStack(AndroidHttpClient.newInstance(userAgent));
+        }
+    }
+
+    Network network = new BasicNetwork(stack);
+
+    RequestQueue queue;
+    if (maxDiskCacheBytes &lt;= -1)
+    {
+        // No maximum size specified
+        queue = new RequestQueue(new DiskBasedCache(cacheDir), network);
+    }
+    else
+    {
+        // Disk cache size specified
+        queue = new RequestQueue(new DiskBasedCache(cacheDir, maxDiskCacheBytes), network);
+    }
+
+    queue.start();
+
+    return queue;
+}
+</code></pre><p>我们在构造方法里面发现了一个 HttpStack ，Network , DiskBasedCache 的类，是不是很好奇他是做什么的？不要着急，我们先看看整体流程，再去追着某一个类看看他到底是做什么的，这样才不会陷入代码的细节里面无法自拔。</p>
+<p>第一行代码创建了一个文件，通过名字我们猜测这是一个用作缓存的文件，继续往下，声明了一个值为”volley/0”的变量，根据名称我们猜测其与请求头中的内容有关，然后接下来去获取了应用的包名，拼成了一个完整的userAgent变量，然后对 stack 对象做了一个判断，需要注意的是，我们直接通过 <code>Volley.newRequest(context)</code>方法拿到的 stack 对象此时是 null 的，满足 if 条件，因此会走到 if 包围的语句中，然后会开始判断手机系统的安卓版本，根据版本来选择 stack 的实例对象。然后根据这个 stack 对象创建了一个 Network 的实例，最后判断硬盘缓存大小，而这个值在我们没有设置的时候是-1 满足第一个条件，所以走的第一个条件里面的方法，最后调用一个 start（）方法，返回这个实例对象。</p>
+<p>我们先来看看这个 <code>queue</code>对象的构造方法，参数有两个，一个是跟缓存有关，一个跟网络有关，我们跟踪一下源代码：</p>
+<pre><code>/**
+ * Creates the worker pool. Processing will not begin until {@link #start()} is called.
+ *
+ * @param cache A Cache to use for persisting responses to disk
+ * @param network A Network interface for performing HTTP requests
+ * @param threadPoolSize Number of network dispatcher threads to create
+ * @param delivery A ResponseDelivery interface for posting responses and errors
+ */
+public RequestQueue(Cache cache, Network network, int threadPoolSize,
+        ResponseDelivery delivery) {
+    mCache = cache;
+    mNetwork = network;
+    mDispatchers = new NetworkDispatcher[threadPoolSize];
+    mDelivery = delivery;
+}
+
+/**
+ * Creates the worker pool. Processing will not begin until {@link #start()} is called.
+ *
+ * @param cache A Cache to use for persisting responses to disk
+ * @param network A Network interface for performing HTTP requests
+ * @param threadPoolSize Number of network dispatcher threads to create
+ */
+public RequestQueue(Cache cache, Network network, int threadPoolSize) {
+    this(cache, network, threadPoolSize,
+            new ExecutorDelivery(new Handler(Looper.getMainLooper())));
+}
+
+/**
+ * Creates the worker pool. Processing will not begin until {@link #start()} is called.
+ *
+ * @param cache A Cache to use for persisting responses to disk
+ * @param network A Network interface for performing HTTP requests
+ */
+public RequestQueue(Cache cache, Network network) {
+    this(cache, network, DEFAULT_NETWORK_THREAD_POOL_SIZE);
+}
+</code></pre><p>可以看到，上述代码片段最终会走到第一个构造方法中，这时才真正实例化了一个<code>queue</code>对象，然后调用了它的<code>start()</code>方法，我们再看看这个方法主要做了什么事情</p>
+<pre><code>/**
+ * Starts the dispatchers in this queue.
+ */
+public void start() {
+    stop();  // Make sure any currently running dispatchers are stopped.
+    // Create the cache dispatcher and start it.
+    mCacheDispatcher = new CacheDispatcher(mCacheQueue, mNetworkQueue, mCache, mDelivery);
+    mCacheDispatcher.start();
+
+    // Create network dispatchers (and corresponding threads) up to the pool size.
+    for (int i = 0; i &lt; mDispatchers.length; i++) {
+        NetworkDispatcher networkDispatcher = new NetworkDispatcher(mNetworkQueue, mNetwork,
+                mCache, mDelivery);
+        mDispatchers[i] = networkDispatcher;
+        networkDispatcher.start();
+    }
+}
+</code></pre><p>这个方法首先是调用了自身的<code>stop()</code>方法，根据作者的注释，这是为了确保这个时候当前正在运行的<code>dispatcher</code>对象都处于停止状态。然后分别创建了一个 CacheDispatcher 和 一个 NetworkDispatcher 的数组集合,由名字联想，应该分别是用于做网络请求和本地缓存请求的方法，我们首先跟进第一个 Dispatcher 看看里面到底做了些什么。</p>
+<p><code>public class CacheDispatcher extends Thread</code>由此看出，这是一个线程的类，那么我们需要关注的就是他的run方法到底做了什么，我们接下来看一下代码：</p>
+<pre><code>Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+
+    // Make a blocking call to initialize the cache.
+    mCache.initialize();
+
+    Request&lt;?&gt; request;
+    while (true) {
+        // release previous request object to avoid leaking request object when mQueue is drained.
+        request = null;
+        try {
+            // Take a request from the queue.
+            request = mCacheQueue.take();
+        } catch (InterruptedException e) {
+            // We may have been interrupted because it was time to quit.
+            if (mQuit) {
+                return;
+            }
+            continue;
+        }
+        try {
+            request.addMarker(&quot;cache-queue-take&quot;);
+
+            // If the request has been canceled, don&apos;t bother dispatching it.
+            if (request.isCanceled()) {
+                request.finish(&quot;cache-discard-canceled&quot;);
+                continue;
+            }
+
+            // Attempt to retrieve this item from cache.
+            Cache.Entry entry = mCache.get(request.getCacheKey());
+            if (entry == null) {
+                request.addMarker(&quot;cache-miss&quot;);
+                // Cache miss; send off to the network dispatcher.
+                mNetworkQueue.put(request);
+                continue;
+            }
+
+            // If it is completely expired, just send it to the network.
+            if (entry.isExpired()) {
+                request.addMarker(&quot;cache-hit-expired&quot;);
+                request.setCacheEntry(entry);
+                mNetworkQueue.put(request);
+                continue;
+            }
+
+            // We have a cache hit; parse its data for delivery back to the request.
+            request.addMarker(&quot;cache-hit&quot;);
+            Response&lt;?&gt; response = request.parseNetworkResponse(
+                    new NetworkResponse(entry.data, entry.responseHeaders));
+            request.addMarker(&quot;cache-hit-parsed&quot;);
+
+            if (!entry.refreshNeeded()) {
+                // Completely unexpired cache hit. Just deliver the response.
+                mDelivery.postResponse(request, response);
+            } else {
+                // Soft-expired cache hit. We can deliver the cached response,
+                // but we need to also send the request to the network for
+                // refreshing.
+                request.addMarker(&quot;cache-hit-refresh-needed&quot;);
+                request.setCacheEntry(entry);
+
+                // Mark the response as intermediate.
+                response.intermediate = true;
+
+                // Post the intermediate response back to the user and have
+                // the delivery then forward the request along to the network.
+                final Request&lt;?&gt; finalRequest = request;
+                mDelivery.postResponse(request, response, new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            mNetworkQueue.put(finalRequest);
+                        } catch (InterruptedException e) {
+                            // Not much we can do about this.
+                        }
+                    }
+                });
+            }
+        } catch (Exception e) {
+            VolleyLog.e(e, &quot;Unhandled exception %s&quot;, e.toString());
+        }
+    }
+</code></pre><p>代码有点多，我们一点一点来看：第一步，初始化缓存；然后先声明一个网络请求的对象；接着进入到一个死循环的方法中，这时先将请求置空，接着从传递进来的请求队列中一个一个取出放入这个请求队列的请求对象，然后判断这个请求是否被取消，若没有被取消，继续往下执行，否则返回循环开始阶段，重新去取请求对象；然后，根据缓存对象去拿缓存的实体类，如果得到的实体类为空，则声明这个缓存丢失了，将这个请求重新添加到网络请求的队列中；如果这个缓存对象过期了，将这个请求对象重新添加到网络请求队列中；如果直到这里一直都没有满足条件，则证明这个请求可以直接通过缓存得到，就不需要去重新请求网络得到数据，那么这时候就会去直接把缓存中的实体类的数据当成网络请求的返回结果。然后再判断这个实体类是否需要刷新，如果需要的话，再返回请求结果之后，会将这个请求添加到网络请求队列中去。</p>
+<p>总结一下这个判断逻辑，只要是缓存中拿到的对象，就不需要再添加到网络请求队列的线程中，否则就添加到网络请求的队列中。</p>
+<p>然后我们看一下 NetworkDispatcher 这个类，首先它也是一个 Thread 的类。</p>
+<pre><code>while (true) {
+        long startTimeMs = SystemClock.elapsedRealtime();
+        // release previous request object to avoid leaking request object when mQueue is drained.
+        request = null;
+        try {
+            // Take a request from the queue.
+            request = mQueue.take();
+        } catch (InterruptedException e) {
+            // We may have been interrupted because it was time to quit.
+            if (mQuit) {
+                return;
+            }
+            continue;
+        }
+
+        try {
+            request.addMarker(&quot;network-queue-take&quot;);
+
+            // If the request was cancelled already, do not perform the
+            // network request.
+            if (request.isCanceled()) {
+                request.finish(&quot;network-discard-cancelled&quot;);
+                continue;
+            }
+
+            addTrafficStatsTag(request);
+
+            // Perform the network request.
+            NetworkResponse networkResponse = mNetwork.performRequest(request);
+            request.addMarker(&quot;network-http-complete&quot;);
+
+            // If the server returned 304 AND we delivered a response already,
+            // we&apos;re done -- don&apos;t deliver a second identical response.
+            if (networkResponse.notModified &amp;&amp; request.hasHadResponseDelivered()) {
+                request.finish(&quot;not-modified&quot;);
+                continue;
+            }
+
+            // Parse the response here on the worker thread.
+            Response&lt;?&gt; response = request.parseNetworkResponse(networkResponse);
+            request.addMarker(&quot;network-parse-complete&quot;);
+
+            // Write to cache if applicable.
+            // TODO: Only update cache metadata instead of entire record for 304s.
+            if (request.shouldCache() &amp;&amp; response.cacheEntry != null) {
+                mCache.put(request.getCacheKey(), response.cacheEntry);
+                request.addMarker(&quot;network-cache-written&quot;);
+            }
+
+            // Post the response back.
+            request.markDelivered();
+            mDelivery.postResponse(request, response);
+        } catch (VolleyError volleyError) {
+            volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
+            parseAndDeliverNetworkError(request, volleyError);
+        } catch (Exception e) {
+            VolleyLog.e(e, &quot;Unhandled exception %s&quot;, e.toString());
+            VolleyError volleyError = new VolleyError(e);
+            volleyError.setNetworkTimeMs(SystemClock.elapsedRealtime() - startTimeMs);
+            mDelivery.postError(request, volleyError);
+        }
+    }
+</code></pre><p>这个<code>run()</code>方法就相对简单明了了一点，首先判断请求队列是否被取消了，如果没有的话，就通过 Network 的类来获得网络请求的结果，然后判断这个返回结果是否已经被接受到了，如果接受到了且结果没有改变，就跳过这个步骤，否则去解析这个网络请求返回的数据；接着判断这个请求队列是否需要缓存且缓存的实体存在，若存在就将这个实体和请求对象的名称缓存起来，最后把这个请求标记为已经被发送的，然后调用传入的接口，将结果回调出去。</p>
+<p>现在已经把两个线程的源码基本过了一遍，我们可以得出结论，我们添加到请求队列中的请求对象，首先会经过缓存队列去查找之前是否存在已经缓存过并且尚未过期的数据，如果存在就直接返回数据，否则将这个请求添加到网络请求的队列中，去请求网络得到数据。</p>
+<p>现在已经将第二步 创建请求队列的代码分析了一遍，但是现在还是存在一个问题的：HttpStack / Cache / Network 这些类到底是做什么的呢？不要着急，我们先把最后一步<code>mQueue.add(testStringRequest);</code>分析一下，再回过头解决我们心中的疑惑。</p>
+<pre><code>public &lt;T&gt; Request&lt;T&gt; add(Request&lt;T&gt; request) {
+    // Tag the request as belonging to this queue and add it to the set of current requests.
+    request.setRequestQueue(this);
+    synchronized (mCurrentRequests) {
+        mCurrentRequests.add(request);
+    }
+
+    // Process requests in the order they are added.
+    request.setSequence(getSequenceNumber());
+    request.addMarker(&quot;add-to-queue&quot;);
+
+    // If the request is uncacheable, skip the cache queue and go straight to the network.
+    if (!request.shouldCache()) {
+        mNetworkQueue.add(request);
+        return request;
+    }
+
+    // Insert request into stage if there&apos;s already a request with the same cache key in flight.
+    synchronized (mWaitingRequests) {
+        String cacheKey = request.getCacheKey();
+        if (mWaitingRequests.containsKey(cacheKey)) {
+            // There is already a request in flight. Queue up.
+            Queue&lt;Request&lt;?&gt;&gt; stagedRequests = mWaitingRequests.get(cacheKey);
+            if (stagedRequests == null) {
+                stagedRequests = new LinkedList&lt;Request&lt;?&gt;&gt;();
+            }
+            stagedRequests.add(request);
+            mWaitingRequests.put(cacheKey, stagedRequests);
+            if (VolleyLog.DEBUG) {
+                VolleyLog.v(&quot;Request for cacheKey=%s is in flight, putting on hold.&quot;, cacheKey);
+            }
+        } else {
+            // Insert &apos;null&apos; queue for this cacheKey, indicating there is now a request in
+            // flight.
+            mWaitingRequests.put(cacheKey, null);
+            mCacheQueue.add(request);
+        }
+        return request;
+    }
+}
+</code></pre><p>首先将这个请求对象的队列设置称这个 mQueue 对象，然后根据这个请求对象的属性来判断是添加到缓存队列中还是网络请求队列中，如果是可以缓存的，先会去等待的队列中判断是否存在含有这个缓存的缓存对象，如果存在的话，就将这个请求对象添加到等待的队列中，否则就添加到缓存队列中，这个时候，之前的 CatchDispatcher 对象和 NetworkDispatcher 对象的 run 方法就会开始执行了，然后去获取网络请求结果，接着解析数据，最后将结果回调用户，这样就完成了整个流程。</p>
+<p>现在流程走完了，该回过头看看那几个不知道作用的类了。</p>
+<ul>
+<li><p>HttpStack:这个主要是来做网络访问的接口，在 Volley 中主要有 HurlStack 和 HttpClientStack 两个实现类，分别对应 urlConnetion方法请求网络和 httpclient方法请求网络：我们可以看看他们实现的<code>performRequest</code>方法：</p>
+<p>  public HttpResponse performRequest(Request&lt;?&gt; request, Map<string, string=""> additionalHeaders)</string,></p>
+<pre><code>    throws IOException, AuthFailureError {
+String url = request.getUrl();
+HashMap&lt;String, String&gt; map = new HashMap&lt;String, String&gt;();
+map.putAll(request.getHeaders());
+map.putAll(additionalHeaders);
+if (mUrlRewriter != null) {
+    String rewritten = mUrlRewriter.rewriteUrl(url);
+    if (rewritten == null) {
+        throw new IOException(&quot;URL blocked by rewriter: &quot; + url);
+    }
+    url = rewritten;
+}
+URL parsedUrl = new URL(url);
+HttpURLConnection connection = openConnection(parsedUrl, request);
+for (String headerName : map.keySet()) {
+    connection.addRequestProperty(headerName, map.get(headerName));
+}
+setConnectionParametersForRequest(connection, request);
+// Initialize HttpResponse with data from the HttpURLConnection.
+ProtocolVersion protocolVersion = new ProtocolVersion(&quot;HTTP&quot;, 1, 1);
+int responseCode = connection.getResponseCode();
+if (responseCode == -1) {
+    // -1 is returned by getResponseCode() if the response code could not be retrieved.
+    // Signal to the caller that something was wrong with the connection.
+    throw new IOException(&quot;Could not retrieve response code from HttpUrlConnection.&quot;);
+}
+StatusLine responseStatus = new BasicStatusLine(protocolVersion,
+        connection.getResponseCode(), connection.getResponseMessage());
+BasicHttpResponse response = new BasicHttpResponse(responseStatus);
+if (hasResponseBody(request.getMethod(), responseStatus.getStatusCode())) {
+    response.setEntity(entityFromConnection(connection));
+}
+for (Entry&lt;String, List&lt;String&gt;&gt; header : connection.getHeaderFields().entrySet()) {
+    if (header.getKey() != null) {
+        Header h = new BasicHeader(header.getKey(), header.getValue().get(0));
+        response.addHeader(h);
+    }
+}
+return response;
+</code></pre></li>
+</ul>
+<pre><code>/**
+*z这是httpclient的请求
+*/
+HttpUriRequest httpRequest = createHttpRequest(request, additionalHeaders);
+addHeaders(httpRequest, additionalHeaders);
+addHeaders(httpRequest, request.getHeaders());
+onPrepareRequest(httpRequest);
+HttpParams httpParams = httpRequest.getParams();
+int timeoutMs = request.getTimeoutMs();
+// TODO: Reevaluate this connection timeout based on more wide-scale
+// data collection and possibly different for wifi vs. 3G.
+HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+HttpConnectionParams.setSoTimeout(httpParams, timeoutMs);
+return mClient.execute(httpRequest);
+</code></pre><p>有兴趣的朋友可以深入研究一下。</p>
+<ul>
+<li>Cache:缓存接口，在 Volley 中的实现类是 DiskBasedCache 这个对象，主要是做了文件缓存。</li>
+<li><p>Network:这是一个对网络请求结果的细节进行处理的接口，主要实现类是 BasicNetwork,下面是代码细节。</p>
+<p> while (true) {</p>
+<pre><code>    HttpResponse httpResponse = null;
+    byte[] responseContents = null;
+    Map&lt;String, String&gt; responseHeaders = Collections.emptyMap();
+    try {
+        // Gather headers.
+        Map&lt;String, String&gt; headers = new HashMap&lt;String, String&gt;();
+        addCacheHeaders(headers, request.getCacheEntry());
+        httpResponse = mHttpStack.performRequest(request, headers);
+        StatusLine statusLine = httpResponse.getStatusLine();
+        int statusCode = statusLine.getStatusCode();
+
+        responseHeaders = convertHeaders(httpResponse.getAllHeaders());
+        // Handle cache validation.
+        if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
+
+            Entry entry = request.getCacheEntry();
+            if (entry == null) {
+                return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED, null,
+                        responseHeaders, true,
+                        SystemClock.elapsedRealtime() - requestStart);
+            }
+
+            // A HTTP 304 response does not have all header fields. We
+            // have to use the header fields from the cache entry plus
+            // the new ones from the response.
+            // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.5
+            entry.responseHeaders.putAll(responseHeaders);
+            return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED, entry.data,
+                    entry.responseHeaders, true,
+                    SystemClock.elapsedRealtime() - requestStart);
+        }
+
+        // Handle moved resources
+        if (statusCode == HttpStatus.SC_MOVED_PERMANENTLY || statusCode == HttpStatus.SC_MOVED_TEMPORARILY) {
+            String newUrl = responseHeaders.get(&quot;Location&quot;);
+            request.setRedirectUrl(newUrl);
+        }
+
+        // Some responses such as 204s do not have content.  We must check.
+        if (httpResponse.getEntity() != null) {
+          responseContents = entityToBytes(httpResponse.getEntity());
+        } else {
+          // Add 0 byte response as a way of honestly representing a
+          // no-content request.
+          responseContents = new byte[0];
+        }
+
+        // if the request is slow, log it.
+        long requestLifetime = SystemClock.elapsedRealtime() - requestStart;
+        logSlowRequests(requestLifetime, request, responseContents, statusLine);
+
+        if (statusCode &lt; 200 || statusCode &gt; 299) {
+            throw new IOException();
+        }
+        return new NetworkResponse(statusCode, responseContents, responseHeaders, false,
+                SystemClock.elapsedRealtime() - requestStart);
+    } 
+}
+</code></pre><p> 这段方法中大多都是一些网络请求细节方面的东西，我们并不需要太多关心，需要注意的是调用了HttpStack的performRequest()方法，这里的HttpStack就是在一开始调用newRequestQueue()方法是创建的实例，默认情况下如果系统版本号大于9就创建的HurlStack对象，否则创建HttpClientStack对象。前面已经说过，这两个对象的内部实际就是分别使用HttpURLConnection和HttpClient来发送网络请求的，我们就不再跟进去阅读了，之后会将服务器返回的数据组装成一个NetworkResponse对象进行返回。</p>
+</li>
+</ul>
+<p>根据我们创建的请求对象的 <code>parseNetworkResponse</code>方法，会将得到的结果解析成为我们想要的数据，然后会通过默认的 ExecutorDelivery 来对线程进行管理，</p>
+<pre><code>    public RequestQueue(Cache cache, Network network, int threadPoolSize) {
+    this(cache, network, threadPoolSize,
+            new ExecutorDelivery(new Handler(Looper.getMainLooper())));
+}
+</code></pre><p>根据这段代码可以知道，创建请求队列时候会创建一个位于主线程中的 Handler 对象。</p>
+<pre><code>@Override
+public void postResponse(Request&lt;?&gt; request, Response&lt;?&gt; response, Runnable runnable) {
+    request.markDelivered();
+    request.addMarker(&quot;post-response&quot;);
+    mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, runnable));
+}
+
+@Override
+public void postError(Request&lt;?&gt; request, VolleyError error) {
+    request.addMarker(&quot;post-error&quot;);
+    Response&lt;?&gt; response = Response.error(error);
+    mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));
+}
+</code></pre><p>这两段代码就是传递结果和传递错误的方法，我们注意到最后总是会调用<code>mResponsePoster.execute(new ResponseDeliveryRunnable(request, response, null));</code>这个方法，那我们再跟踪一下，看看里面是一个什么样的逻辑：</p>
+<pre><code>// If this request has canceled, finish it and don&apos;t deliver.
+    if (mRequest.isCanceled()) {
+        mRequest.finish(&quot;canceled-at-delivery&quot;);
+        return;
+    }
+
+    // Deliver a normal response or error, depending.
+    if (mResponse.isSuccess()) {
+        mRequest.deliverResponse(mResponse.result);
+    } else {
+        mRequest.deliverError(mResponse.error);
+    }
+
+    // If this is an intermediate response, add a marker, otherwise we&apos;re done
+    // and the request can be finished.
+    if (mResponse.intermediate) {
+        mRequest.addMarker(&quot;intermediate-response&quot;);
+    } else {
+        mRequest.finish(&quot;done&quot;);
+    }
+
+    // If we have been provided a post-delivery runnable, run it.
+    if (mRunnable != null) {
+        mRunnable.run();
+    }
+</code></pre><p>我们发现，其实这里面的方法反而是会回调请求对象的方法，那我们在回到请求对象上，我们拿 StringRequest 对象来举例：</p>
+<pre><code>@Override
+protected void deliverResponse(String response) {
+    if (mListener != null) {
+        mListener.onResponse(response);
+    }
+}
+public void deliverError(VolleyError error) {
+    if (mErrorListener != null) {
+        mErrorListener.onErrorResponse(error);
+    }
+}
+</code></pre><p>很明显了，创建请求队列的两个接口和这两个接口就可以对应起来了，那么这时候就已经将结果通过接口回调的方式传回我们一开始请求的地方了。</p>
+<h1 id="步骤三：总结"><a href="#步骤三：总结" class="headerlink" title="步骤三：总结"></a>步骤三：总结</h1><p>其实 Volley 代码本身并不复杂，也没有太多嵌套的地方，只要静下心来，并且不太沉迷代码细节之中，应该还是能够较简单的读懂这个代码的，下一篇将会试着解析一个图片加载框架。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/07/18/Picasso 源码解析/" rel="prev" title="Picasso 源码解析">
+                Picasso 源码解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">eaglewang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categroies/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤一：使用"><span class="nav-number">1.</span> <span class="nav-text">步骤一：使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤二：了解调用流程"><span class="nav-number">2.</span> <span class="nav-text">步骤二：了解调用流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤三：总结"><span class="nav-number">3.</span> <span class="nav-text">步骤三：总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">eaglewang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

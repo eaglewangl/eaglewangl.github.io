@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="时隔不久，我又回来写源码解析拉~~~，今天给大家带来的是 OkHttp3.X 的代码解析，上一篇博客中提到会从 Retrofit2 和 OkHttp3 之中选择一篇来和大家一起解析，而选择这一篇的原因是在于 Retrofit2 只是对网络请求做了一个封装，而封装的内容正是 OkHttp ，所以为了避免解析 Rerofi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OkHttp源码解析">
+<meta property="og:url" content="eaglewangl.github.io/2017/09/03/OkHttp 源码解析一之请求过程初探/index.html">
+<meta property="og:site_name" content="eaglewang&#39;s blog">
+<meta property="og:description" content="时隔不久，我又回来写源码解析拉~~~，今天给大家带来的是 OkHttp3.X 的代码解析，上一篇博客中提到会从 Retrofit2 和 OkHttp3 之中选择一篇来和大家一起解析，而选择这一篇的原因是在于 Retrofit2 只是对网络请求做了一个封装，而封装的内容正是 OkHttp ，所以为了避免解析 Rerofit 过程中遇到 OkHttp 相关的代码时遇到的问题，还是决定先来试着解析一下">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="https://blog.piasy.com/img/201607/okhttp_full_process.png">
+<meta property="og:updated_time" content="2018-01-21T11:30:07.239Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OkHttp源码解析">
+<meta name="twitter:description" content="时隔不久，我又回来写源码解析拉~~~，今天给大家带来的是 OkHttp3.X 的代码解析，上一篇博客中提到会从 Retrofit2 和 OkHttp3 之中选择一篇来和大家一起解析，而选择这一篇的原因是在于 Retrofit2 只是对网络请求做了一个封装，而封装的内容正是 OkHttp ，所以为了避免解析 Rerofit 过程中遇到 OkHttp 相关的代码时遇到的问题，还是决定先来试着解析一下">
+<meta name="twitter:image" content="https://blog.piasy.com/img/201607/okhttp_full_process.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="eaglewangl.github.io/2017/09/03/OkHttp 源码解析一之请求过程初探/"/>
+
+
+
+
+
+  <title>OkHttp源码解析 | eaglewang's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">eaglewang's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="eaglewangl.github.io/2017/09/03/OkHttp 源码解析一之请求过程初探/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="eaglewang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="eaglewang's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">OkHttp源码解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-03T19:11:18+08:00">
+                2017-09-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android-源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Android 源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>时隔不久，我又回来写源码解析拉~~~，今天给大家带来的是 OkHttp3.X 的代码解析，上一篇博客中提到会从 Retrofit2 和 OkHttp3 之中选择一篇来和大家一起解析，而选择这一篇的原因是在于 Retrofit2 只是对网络请求做了一个封装，而封装的内容正是 OkHttp ，所以为了避免解析 Rerofit 过程中遇到 OkHttp 相关的代码时遇到的问题，还是决定先来试着解析一下 OkHttp 的源码。当然我能力是有限的，只能分析一下大致的流程，暂时还无法深入代码细节以及涉及到的设计模式，深表遗憾，然因此更有动力向前。</p>
+<h1 id="步骤一、总体流程图"><a href="#步骤一、总体流程图" class="headerlink" title="步骤一、总体流程图"></a>步骤一、总体流程图</h1><p><img src="https://blog.piasy.com/img/201607/okhttp_full_process.png" alt=""><br>ps:图片出处来自 Piasy 的博客，解析源码时借鉴了很多网上大大的无私分享，出生在这个分享的时代真是深感幸运。</p>
+<h1 id="步骤二、简单使用"><a href="#步骤二、简单使用" class="headerlink" title="步骤二、简单使用"></a>步骤二、简单使用</h1><pre><code>//使用 GET 请求获取数据（同步执行）
+OkHttpClient client = new OkHttpClient();
+
+String run(String url) throws IOException {
+  Request request = new Request.Builder()
+      .url(url)
+      .build();
+
+  Response response = client.newCall(request).execute();
+  return response.body().string();
+}
+
+//使用 POST 请求上传数据
+public static final MediaType JSON
+    = MediaType.parse(&quot;application/json; charset=utf-8&quot;);
+
+OkHttpClient client = new OkHttpClient();
+
+String post(String url, String json) throws IOException {
+  RequestBody body = RequestBody.create(JSON, json);
+  Request request = new Request.Builder()
+      .url(url)
+      .post(body)
+      .build();
+  Response response = client.newCall(request).execute();
+  return response.body().string();
+}
+</code></pre><p>例子来自 <a href="http://square.github.io/okhttp/#examples" title="官网" target="_blank" rel="noopener">http://square.github.io/okhttp/#examples</a></p>
+<h1 id="步骤三、源码流程分析"><a href="#步骤三、源码流程分析" class="headerlink" title="步骤三、源码流程分析"></a>步骤三、源码流程分析</h1><pre><code>//创建 client 对象
+OkHttpClient okHttpClient = new OkHttpClient();
+</code></pre><p>跟踪代码，看看这个初始化方法中执行了什么逻辑：<br>    //调用自己的 new<br>    public OkHttpClient() {<br>        this(new Builder());<br>      }</p>
+<pre><code>public Builder newBuilder() {
+    return new Builder(this);
+  }
+
+Builder(OkHttpClient okHttpClient) {
+  this.dispatcher = okHttpClient.dispatcher;
+  this.proxy = okHttpClient.proxy;
+  this.protocols = okHttpClient.protocols;
+  this.connectionSpecs = okHttpClient.connectionSpecs;
+  this.interceptors.addAll(okHttpClient.interceptors);
+  this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
+  this.eventListenerFactory = okHttpClient.eventListenerFactory;
+  this.proxySelector = okHttpClient.proxySelector;
+  this.cookieJar = okHttpClient.cookieJar;
+  this.internalCache = okHttpClient.internalCache;
+  this.cache = okHttpClient.cache;
+  this.socketFactory = okHttpClient.socketFactory;
+  this.sslSocketFactory = okHttpClient.sslSocketFactory;
+  this.certificateChainCleaner = okHttpClient.certificateChainCleaner;
+  this.hostnameVerifier = okHttpClient.hostnameVerifier;
+  this.certificatePinner = okHttpClient.certificatePinner;
+  this.proxyAuthenticator = okHttpClient.proxyAuthenticator;
+  this.authenticator = okHttpClient.authenticator;
+  this.connectionPool = okHttpClient.connectionPool;
+  this.dns = okHttpClient.dns;
+  this.followSslRedirects = okHttpClient.followSslRedirects;
+  this.followRedirects = okHttpClient.followRedirects;
+  this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
+  this.connectTimeout = okHttpClient.connectTimeout;
+  this.readTimeout = okHttpClient.readTimeout;
+  this.writeTimeout = okHttpClient.writeTimeout;
+  this.pingInterval = okHttpClient.pingInterval;
+}
+
+
+OkHttpClient(Builder builder) {
+this.dispatcher = builder.dispatcher;
+this.proxy = builder.proxy;
+this.protocols = builder.protocols;
+this.connectionSpecs = builder.connectionSpecs;
+this.interceptors = Util.immutableList(builder.interceptors);
+this.networkInterceptors = Util.immutableList(builder.networkInterceptors);
+this.eventListenerFactory = builder.eventListenerFactory;
+this.proxySelector = builder.proxySelector;
+this.cookieJar = builder.cookieJar;
+this.cache = builder.cache;
+this.internalCache = builder.internalCache;
+this.socketFactory = builder.socketFactory;
+
+boolean isTLS = false;
+for (ConnectionSpec spec : connectionSpecs) {
+  isTLS = isTLS || spec.isTls();
+}
+
+if (builder.sslSocketFactory != null || !isTLS) {
+  this.sslSocketFactory = builder.sslSocketFactory;
+  this.certificateChainCleaner = builder.certificateChainCleaner;
+} else {
+  X509TrustManager trustManager = systemDefaultTrustManager();
+  this.sslSocketFactory = systemDefaultSslSocketFactory(trustManager);
+  this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
+}
+
+this.hostnameVerifier = builder.hostnameVerifier;
+this.certificatePinner = builder.certificatePinner.withCertificateChainCleaner(
+    certificateChainCleaner);
+this.proxyAuthenticator = builder.proxyAuthenticator;
+this.authenticator = builder.authenticator;
+this.connectionPool = builder.connectionPool;
+this.dns = builder.dns;
+this.followSslRedirects = builder.followSslRedirects;
+this.followRedirects = builder.followRedirects;
+this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
+this.connectTimeout = builder.connectTimeout;
+this.readTimeout = builder.readTimeout;
+this.writeTimeout = builder.writeTimeout;
+this.pingInterval = builder.pingInterval;
+</code></pre><p>  }</p>
+<p>远远没有想到，一个初始化的方法竟然在一个类里面来来回回调用了数次，而在初始化方法里面依然只是做了各种本地成员变量的初始化过程；我们先从 GET 请求开始分析吧:</p>
+<pre><code>Request request = new Request.Builder()
+      .url(url)
+      .build();
+
+Response response = client.newCall(request).execute();
+return response.body().string();
+</code></pre><p>第一步，创建了一个等待被执行的请求对象，通过 <code>Request</code>对象的内部类 <code>Builder</code>对象来配置这个请求所需要的参数，包括请求路径 ‘url’、’method’、’header’、’body’等信息，看到最后的 <code>build()</code>方法也可以看出，这些复杂的第三方库通常都会选择使用 Builder 模式来实例化一些参数不太确定的对象。<br>第二部，使用我们创建的 client 对象的 <code>newCall(request)</code> 方法来创建一个用于发起请求的对象，我们来看看这个 <code>newCall()</code> 方法的具体实现：</p>
+<pre><code>@Override public Call newCall(Request request) {
+    return new RealCall(this, request, false /* for web socket */);
+  }
+
+RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
+    final EventListener.Factory eventListenerFactory = client.eventListenerFactory();
+
+    this.client = client;
+    this.originalRequest = originalRequest;
+    this.forWebSocket = forWebSocket;
+    this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
+
+    // TODO(jwilson): this is unsafe publication and not threadsafe.
+    this.eventListener = eventListenerFactory.create(this);
+}
+</code></pre><p>我们看到，依然是在构造方法中对自己的属性进行了声明并赋值。那么，我们接下来看看 <code>execute()</code> 方法又做了什么呢？</p>
+<pre><code>@Override public Response execute() throws IOException {
+  synchronized (this) {
+    //判断是否被执行过，如果执行过则抛出异常，否则标记该变量为True
+    if (executed) throw new IllegalStateException(&quot;Already Executed&quot;);
+    executed = true;
+  }
+
+  try {
+    //调用okhttpclient对象的 dispatcher方法的execute方法来执行
+    client.dispatcher().executed(this);
+    //response结果是根据这个 getResponseWithInterceptorChain()方法得到的
+    Response result = getResponseWithInterceptorChain();
+    //如果获得的结果为null ， 则抛出异常，否则将结果返回
+    if (result == null) throw new IOException(&quot;Canceled&quot;);
+    return result;
+  } finally {
+    //dispatcher 对象调用请求完毕的方法。
+    client.dispatcher().finished(this);
+  }
+}
+
+  synchronized void executed(RealCall call) {
+      //在一个运行着同步请求的deque 中添加了这个请求
+      runningSyncCalls.add(call);
+  }
+</code></pre><p>其实同步请求里面只是将请求添加到队列中，真正去获取响应的结果还是 <code>getResponseWithInterceptorChain()</code> 这个方法，我们来看看这个方法的逻辑：</p>
+<pre><code>  Response getResponseWithInterceptorChain() throws IOException {
+    // Build a full stack of interceptors.
+    //创建一个盛放 Interceptor 的有序集合
+    List&lt;Interceptor&gt; interceptors = new ArrayList&lt;&gt;();
+    //先添加我们创建 client 时，可能添加的 Interceptor 对象
+    interceptors.addAll(client.interceptors());
+    //然后按顺序添加 各种不同的拦截器
+    //添加失败重试以及重定向的拦截器
+    interceptors.add(retryAndFollowUpInterceptor);
+    //负责把用户构造的请求转换为发送到服务器的请求，把服务器返回的响应转换为用户友好响应的拦截器
+    interceptors.add(new BridgeInterceptor(client.cookieJar()));
+    //负责读取缓存直接返回、更新缓存的拦截器
+    interceptors.add(new CacheInterceptor(client.internalCache()));
+    //负责和服务器建立连接的拦截器
+    interceptors.add(new ConnectInterceptor(client));
+    //判断是否使用websocket 如果使用的话添加websocket的拦截器
+    if (!forWebSocket) {
+      interceptors.addAll(client.networkInterceptors());
+    }
+    //负责向服务器发送请求数据、从服务器读取响应数据的拦截器
+    interceptors.add(new CallServerInterceptor(forWebSocket));
+    //
+    Interceptor.Chain chain = new RealInterceptorChain(
+        interceptors, null, null, null, 0, originalRequest);
+    return chain.proceed(originalRequest);
+  }
+}
+</code></pre><p>上面的代码概括起来就是先给一个集合按顺序添加拦截器，然后把这个集合当成参数创建一个 Chain 对象，然后就由这个 Chain 对象去执行 proceed 方法。</p>
+<pre><code>public Response proceed(Request request, StreamAllocation streamAllocation, HttpCodec httpCodec,RealConnection connection) throws IOException {
+    //如果index 大于 拦截器的长度，则抛出异常
+    if (index &gt;= interceptors.size()) throw new AssertionError();
+
+    calls++;
+
+    // If we already have a stream, confirm that the incoming request will use it.
+    if (this.httpCodec != null &amp;&amp; !this.connection.supportsUrl(request.url())) {
+      throw new IllegalStateException(&quot;network interceptor &quot; + interceptors.get(index - 1) + &quot; must retain the same host and port&quot;);
+    }
+
+    // If we already have a stream, confirm that this is the only call to chain.proceed().
+    if (this.httpCodec != null &amp;&amp; calls &gt; 1) {
+      throw new IllegalStateException(&quot;network interceptor &quot; + interceptors.get(index - 1)
+          + &quot; must call proceed() exactly once&quot;);
+    }
+
+    // Call the next interceptor in the chain.
+    // 根据拦截器生成一个 Chain 对象
+    RealInterceptorChain next = new RealInterceptorChain(
+        interceptors, streamAllocation, httpCodec, connection, index + 1, request);
+    // 获取当前的拦截器对象
+    Interceptor interceptor = interceptors.get(index);
+    //执行 intercept 方法获取response
+    Response response = interceptor.intercept(next);
+
+    // Confirm that the next interceptor made its required call to chain.proceed().
+    if (httpCodec != null &amp;&amp; index + 1 &lt; interceptors.size() &amp;&amp; next.calls != 1) {
+      throw new IllegalStateException(&quot;network interceptor &quot; + interceptor
+          + &quot; must call proceed() exactly once&quot;);
+    }
+
+    // Confirm that the intercepted response isn&apos;t null.
+    if (response == null) {
+      throw new NullPointerException(&quot;interceptor &quot; + interceptor + &quot; returned null&quot;);
+    }
+
+    return response;
+      }
+</code></pre><p>事实上，这里可以说是 OkHttp3 的精华之一，通过拦截器 和 Chain 对象对整个网络请求进行了分层管理，每一个拦截器对象专注于自己的职责。我们接下来看看第一个拦截器的 <code>intercept</code> 方法，由于我们并没有添加自定义的拦截器，那么第一个拦截器对象就是 <code>RetryAndFollowUpInterceptor</code>，我们来看看它的方法：</p>
+<pre><code>@Override public Response intercept(Chain chain) throws IOException {
+//在创建 Chain 对象时，我们已经将request作为参数传递给了 Chain 对象，所以直接从中取得当前的request
+Request request = chain.request();
+//根据连接池获取一个 StreamAllocation 对象
+streamAllocation = new StreamAllocation(
+    client.connectionPool(), createAddress(request.url()), callStackTrace);
+
+int followUpCount = 0;
+//定义一个响应对象
+Response priorResponse = null;
+//进入死循环
+while (true) {
+  //如果调用取消方法，则释放StreamAllocation对象，并且抛出取消异常
+  if (canceled) {
+    streamAllocation.release();
+    throw new IOException(&quot;Canceled&quot;);
+  }
+  //定义一个相应对象
+  Response response = null;
+  boolean releaseConnection = true;
+  try {
+    //这个相应对象的获得仍是通过下一个拦截器来进行获取
+    response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
+    releaseConnection = false;
+  } catch (RouteException e) {
+    // The attempt to connect via a route failed. The request will not have been sent.
+    if (!recover(e.getLastConnectException(), false, request)) {
+      throw e.getLastConnectException();
+    }
+    releaseConnection = false;
+    continue;
+  } catch (IOException e) {
+    // An attempt to communicate with a server failed. The request may have been sent.
+    boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
+    if (!recover(e, requestSendStarted, request)) throw e;
+    releaseConnection = false;
+    continue;
+  } finally {
+    // We&apos;re throwing an unchecked exception. Release any resources.
+    //释放资源
+    if (releaseConnection) {
+      streamAllocation.streamFailed(null);
+      streamAllocation.release();
+    }
+  }
+  }
+</code></pre><p>看了上面的代码，很明显，在这一个拦截器里，只是简单的创建了一个<code>StreamAllocation</code>对象，然后又重新执行下一层拦截器的 <code>intercept</code> 方法去获取响应，那么依照顺序，接下来就该轮到 <code>BridgeInterceptor</code> 对象了，我们继续追踪代码：</p>
+<pre><code>@Override public Response intercept(Chain chain) throws IOException {
+//获取请求对象
+Request userRequest = chain.request();
+//创建一个请求的 Builder 对象
+Request.Builder requestBuilder = userRequest.newBuilder();
+//根据 请求体是否为空来执行不同操作，主要是设置请求头的信息
+RequestBody body = userRequest.body();
+if (body != null) {
+  MediaType contentType = body.contentType();
+  if (contentType != null) {
+    requestBuilder.header(&quot;Content-Type&quot;, contentType.toString());
+  }
+
+  long contentLength = body.contentLength();
+  if (contentLength != -1) {
+    requestBuilder.header(&quot;Content-Length&quot;, Long.toString(contentLength));
+    requestBuilder.removeHeader(&quot;Transfer-Encoding&quot;);
+  } else {
+    requestBuilder.header(&quot;Transfer-Encoding&quot;, &quot;chunked&quot;);
+    requestBuilder.removeHeader(&quot;Content-Length&quot;);
+  }
+}
+//设置请求头的 host信息
+if (userRequest.header(&quot;Host&quot;) == null) {
+  requestBuilder.header(&quot;Host&quot;, hostHeader(userRequest.url(), false));
+}
+
+if (userRequest.header(&quot;Connection&quot;) == null) {
+  requestBuilder.header(&quot;Connection&quot;, &quot;Keep-Alive&quot;);
+}
+
+// If we add an &quot;Accept-Encoding: gzip&quot; header field we&apos;re responsible for also decompressing
+// the transfer stream.
+//设置请求体允许执行的编解码格式
+boolean transparentGzip = false;
+if (userRequest.header(&quot;Accept-Encoding&quot;) == null &amp;&amp; userRequest.header(&quot;Range&quot;) == null) {
+  transparentGzip = true;
+  requestBuilder.header(&quot;Accept-Encoding&quot;, &quot;gzip&quot;);
+}
+//获取请求的 cookie结合
+List&lt;Cookie&gt; cookies = cookieJar.loadForRequest(userRequest.url());
+if (!cookies.isEmpty()) {
+  requestBuilder.header(&quot;Cookie&quot;, cookieHeader(cookies));
+}
+
+if (userRequest.header(&quot;User-Agent&quot;) == null) {
+  requestBuilder.header(&quot;User-Agent&quot;, Version.userAgent());
+}
+//将重新构造过请求头的请求信息传入下一个拦截器中
+Response networkResponse = chain.proceed(requestBuilder.build());
+省略部分代码
+...}
+</code></pre><p>这里其实只是负责给请求对象添加请求头信息，接下来就到了 <code>CacheInterceptor</code>, 我们继续追着看下去：</p>
+<pre><code>@Override public Response intercept(Chain chain) throws IOException {
+//如果缓存不为空，则先将响应对象设置为缓存中获得数据，或者响应对象为空
+Response cacheCandidate = cache != null
+    ? cache.get(chain.request())
+    : null;
+//获取现在的时间戳
+long now = System.currentTimeMillis();
+//根据时间戳获取当前的缓存策略
+CacheStrategy strategy = new CacheStrategy.Factory(now, chain.request(), cacheCandidate).get();
+//这个请求对象就是我们一开始的请求对象
+Request networkRequest = strategy.networkRequest;
+//根据是否有缓存策略去获取响应对象
+Response cacheResponse = strategy.cacheResponse;
+
+if (cache != null) {
+  cache.trackResponse(strategy);
+}
+
+if (cacheCandidate != null &amp;&amp; cacheResponse == null) {
+  closeQuietly(cacheCandidate.body()); // The cache candidate wasn&apos;t applicable. Close it.
+}
+
+// If we&apos;re forbidden from using the network and the cache is insufficient, fail.
+//如果请求对象和获取的响应都为空，则表明禁止从网络和缓存中获取响应对象，那么构造失败的响应对象
+if (networkRequest == null &amp;&amp; cacheResponse == null) {
+  return new Response.Builder()
+      .request(chain.request())
+      .protocol(Protocol.HTTP_1_1)
+      .code(504)
+      .message(&quot;Unsatisfiable Request (only-if-cached)&quot;)
+      .body(Util.EMPTY_RESPONSE)
+      .sentRequestAtMillis(-1L)
+      .receivedResponseAtMillis(System.currentTimeMillis())
+      .build();
+}
+
+// If we don&apos;t need the network, we&apos;re done.
+//如果我们不需要请求网络，就直接根据缓存对象中获取响应
+if (networkRequest == null) {
+  return cacheResponse.newBuilder()
+      .cacheResponse(stripBody(cacheResponse))
+      .build();
+}
+//最后响应还是根据下一个拦截器获取
+Response networkResponse = null;
+try {
+  networkResponse = chain.proceed(networkRequest);
+} finally {
+  // If we&apos;re crashing on I/O or otherwise, don&apos;t leak the cache body.
+  if (networkResponse == null &amp;&amp; cacheCandidate != null) {
+    closeQuietly(cacheCandidate.body());
+  }
+}
+</code></pre><p>代码注释里面已经写了基本的逻辑，其实就是判断是否从缓存中获取响应，如果缓存直接命中并且没有超过策略的规定时间，则直接返回从缓存中获得的响应，否则去下一个拦截器中获取响应，接下来轮到 <code>ConnectInterceptor</code> 来进行他的表演了~</p>
+<pre><code>@Override public Response intercept(Chain chain) throws IOException {
+RealInterceptorChain realChain = (RealInterceptorChain) chain;
+Request request = realChain.request();
+StreamAllocation streamAllocation = realChain.streamAllocation();
+
+// We need the network to satisfy this request. Possibly for validating a conditional GET.
+boolean doExtensiveHealthChecks = !request.method().equals(&quot;GET&quot;);
+//根据是否需要执行 healthcheck 来生成 HttpCodec 对象，这个对象是对HTTP/HTTP2 协议的抽象，具体的请求过程都是该类完成
+HttpCodec httpCodec = streamAllocation.newStream(client, doExtensiveHealthChecks);
+//创建一个请求的连接，连接过程中对socket进行了封装。
+RealConnection connection = streamAllocation.connection();
+//调用下一个拦截器执行请求方法
+return realChain.proceed(request, streamAllocation, httpCodec, connection);
+ }
+</code></pre><p>这里要说明的是 <code>HttpCodec</code> 钟，利用 Okio 对 <code>Socket</code> 的读写操作进行了封装。接下来就是最后一个拦截器 <code>CallServerInterceptor</code> 的获取响应的方法了，继续加油。</p>
+<pre><code>@Override public Response intercept(Chain chain) throws IOException {
+//获取chain对象
+RealInterceptorChain realChain = (RealInterceptorChain) chain;
+//从chain对象中获取 HttpCodec
+HttpCodec httpCodec = realChain.httpStream();
+//从chain对象中获取 streamAllocation 对象
+StreamAllocation streamAllocation = realChain.streamAllocation();
+//获取RealConnection对象
+RealConnection connection = (RealConnection) realChain.connection();
+//获取请求对象
+Request request = realChain.request();
+//获取现在的时间戳
+long sentRequestMillis = System.currentTimeMillis();
+//调用httpcodec方法 生成请求的请求头对象
+httpCodec.writeRequestHeaders(request);
+
+Response.Builder responseBuilder = null;
+if (HttpMethod.permitsRequestBody(request.method()) &amp;&amp; request.body() != null) {
+  // If there&apos;s a &quot;Expect: 100-continue&quot; header on the request, wait for a &quot;HTTP/1.1 100
+  // Continue&quot; response before transmitting the request body. If we don&apos;t get that, return what
+  // we did get (such as a 4xx response) without ever transmitting the request body.
+  if (&quot;100-continue&quot;.equalsIgnoreCase(request.header(&quot;Expect&quot;))) {
+    httpCodec.flushRequest();
+    responseBuilder = httpCodec.readResponseHeaders(true);
+  }
+
+  if (responseBuilder == null) {
+    // Write the request body if the &quot;Expect: 100-continue&quot; expectation was met.
+    //创建请求对象
+    Sink requestBodyOut = httpCodec.createRequestBody(request, request.body().contentLength());
+    BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
+    request.body().writeTo(bufferedRequestBody);
+    bufferedRequestBody.close();
+  } else if (!connection.isMultiplexed()) {
+    // If the &quot;Expect: 100-continue&quot; expectation wasn&apos;t met, prevent the HTTP/1 connection from
+    // being reused. Otherwise we&apos;re still obligated to transmit the request body to leave the
+    // connection in a consistent state.
+    streamAllocation.noNewStreams();
+  }
+}
+//结束请求过程
+httpCodec.finishRequest();
+
+if (responseBuilder == null) {
+  //读取响应头
+  responseBuilder = httpCodec.readResponseHeaders(false);
+}
+//创建响应对象
+Response response = responseBuilder
+    .request(request)
+    .handshake(streamAllocation.connection().handshake())
+    .sentRequestAtMillis(sentRequestMillis)
+    .receivedResponseAtMillis(System.currentTimeMillis())
+    .build();
+//获取响应状态码
+int code = response.code();
+if (forWebSocket &amp;&amp; code == 101) {
+  // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+  response = response.newBuilder()
+      .body(Util.EMPTY_RESPONSE)
+      .build();
+} else {
+  response = response.newBuilder()
+      .body(httpCodec.openResponseBody(response))
+      .build();
+}
+
+if (&quot;close&quot;.equalsIgnoreCase(response.request().header(&quot;Connection&quot;))
+    || &quot;close&quot;.equalsIgnoreCase(response.header(&quot;Connection&quot;))) {
+  streamAllocation.noNewStreams();
+}
+
+if ((code == 204 || code == 205) &amp;&amp; response.body().contentLength() &gt; 0) {
+  throw new ProtocolException(
+      &quot;HTTP &quot; + code + &quot; had non-zero Content-Length: &quot; + response.body().contentLength());
+}
+//返回响应
+return response;
+</code></pre><p>  }</p>
+<p>呼，我们观察着一整个请求过程，在我看来，每一层拦截器都只是去生成最后请求网络需要的一个参数，或者直接从缓存中获取响应，或者通过之前的拦截器去得到请求所需要的数据去获取请求，真正的把每一层功能分离开，而链式结构的不断调用能一层一层往下进行。感觉好赞</p>
+<p>不过看了这么久，我们也只是分析了一下 OkHttp 的请求的一个抽象流程，还有对请求结果的处理、缓存的处理、以及真正进行网络请求的部分没有涉及到，看来有必要再写一篇 OkHttp 的分析了，我们下一篇文章见。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/08/07/eventBus 源码解析/" rel="next" title="eventBus_源码解析">
+                <i class="fa fa-chevron-left"></i> eventBus_源码解析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/10/OkHttp-源码解析二之请求返回处理/" rel="prev" title="OkHttp_源码解析二之请求返回处理">
+                OkHttp_源码解析二之请求返回处理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">eaglewang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categroies/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤一、总体流程图"><span class="nav-number">1.</span> <span class="nav-text">步骤一、总体流程图</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤二、简单使用"><span class="nav-number">2.</span> <span class="nav-text">步骤二、简单使用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤三、源码流程分析"><span class="nav-number">3.</span> <span class="nav-text">步骤三、源码流程分析</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">eaglewang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

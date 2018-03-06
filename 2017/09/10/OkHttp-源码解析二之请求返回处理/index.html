@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="上一篇解析 OkHttp3 源码的博客中写道最后，仅仅只是把网络请求的过程粗略的分析了一下，但是我们既然知道这一整个请求的结构是链式的结构，那么必然对返回数据的请求处理同样也值得一看，那本篇文章就重点去分析一下从服务器端获取响应之后我们的 OkHttp 做了什么操作吧。 那么首先我们就从最后一个 Chain CallS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OkHttp_源码解析二之请求返回处理">
+<meta property="og:url" content="eaglewangl.github.io/2017/09/10/OkHttp-源码解析二之请求返回处理/index.html">
+<meta property="og:site_name" content="eaglewang&#39;s blog">
+<meta property="og:description" content="上一篇解析 OkHttp3 源码的博客中写道最后，仅仅只是把网络请求的过程粗略的分析了一下，但是我们既然知道这一整个请求的结构是链式的结构，那么必然对返回数据的请求处理同样也值得一看，那本篇文章就重点去分析一下从服务器端获取响应之后我们的 OkHttp 做了什么操作吧。 那么首先我们就从最后一个 Chain CallServerInterceptor 的intercept()方法来看看到底做了什么">
+<meta property="og:locale" content="en">
+<meta property="og:updated_time" content="2018-01-21T11:30:29.831Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OkHttp_源码解析二之请求返回处理">
+<meta name="twitter:description" content="上一篇解析 OkHttp3 源码的博客中写道最后，仅仅只是把网络请求的过程粗略的分析了一下，但是我们既然知道这一整个请求的结构是链式的结构，那么必然对返回数据的请求处理同样也值得一看，那本篇文章就重点去分析一下从服务器端获取响应之后我们的 OkHttp 做了什么操作吧。 那么首先我们就从最后一个 Chain CallServerInterceptor 的intercept()方法来看看到底做了什么">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="eaglewangl.github.io/2017/09/10/OkHttp-源码解析二之请求返回处理/"/>
+
+
+
+
+
+  <title>OkHttp_源码解析二之请求返回处理 | eaglewang's blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">eaglewang's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="eaglewangl.github.io/2017/09/10/OkHttp-源码解析二之请求返回处理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="eaglewang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="eaglewang's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">OkHttp_源码解析二之请求返回处理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-10T21:32:10+08:00">
+                2017-09-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android-源码分析/" itemprop="url" rel="index">
+                    <span itemprop="name">Android 源码分析</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>上一篇解析 OkHttp3 源码的博客中写道最后，仅仅只是把网络请求的过程粗略的分析了一下，但是我们既然知道这一整个请求的结构是链式的结构，那么必然对返回数据的请求处理同样也值得一看，那本篇文章就重点去分析一下从服务器端获取响应之后我们的 OkHttp 做了什么操作吧。</p>
+<p>那么首先我们就从最后一个 Chain <code>CallServerInterceptor</code> 的<code>intercept()</code>方法来看看到底做了什么处理：<br>​<br>    //这里就是完成网络请求的方法<br>    httpCodec.finishRequest();<br>    //如果这个时候构建 response 对象的 Builder是空的，就从 httpCode 对象生成一个 builder对象<br>    if (responseBuilder == null) {<br>      responseBuilder = httpCodec.readResponseHeaders(false);<br>    }<br>    //通过上一步保证了responseBuilder 对象不会为null，那么接下来就根据返回的数据来构造 response 对象<br>    Response response = responseBuilder<br>        .request(request)<br>        .handshake(streamAllocation.connection().handshake())<br>        .sentRequestAtMillis(sentRequestMillis)<br>        .receivedResponseAtMillis(System.currentTimeMillis())<br>        .build();<br>    //根据服务端返回的响应 code 来重新拼加参数来构建 response 对象<br>    int code = response.code();<br>    if (forWebSocket &amp;&amp; code == 101) {<br>      // Connection is upgrading, but we need to ensure interceptors see a non-null response body.<br>      response = response.newBuilder()<br>          .body(Util.EMPTY_RESPONSE)<br>          .build();<br>    } else {<br>      response = response.newBuilder()<br>          .body(httpCodec.openResponseBody(response))<br>          .build();<br>    }</p>
+<pre><code>if (&quot;close&quot;.equalsIgnoreCase(response.request().header(&quot;Connection&quot;))
+    || &quot;close&quot;.equalsIgnoreCase(response.header(&quot;Connection&quot;))) {
+  streamAllocation.noNewStreams();
+}
+
+if ((code == 204 || code == 205) &amp;&amp; response.body().contentLength() &gt; 0) {
+  throw new ProtocolException(
+      &quot;HTTP &quot; + code + &quot; had non-zero Content-Length: &quot; + response.body().contentLength());
+}
+//返回response对象
+return response;
+</code></pre><p>上述是一开始接收到响应对象之后构建成 OkHttpClient 自带的一个  Response 对象，然后就返回了这个响应对象，我们又跟着这个 response 回到上一个 Chain 对象了，就是 <code>ConnectInterceptor</code>这个对象，我们来看看这个对象有没有对响应对象做什么处理：</p>
+<pre><code>return realChain.proceed(request, streamAllocation, httpCodec, connection);
+</code></pre><p>可以看到，只有这一句话，是直接把 <code>CallServerInterceptor</code>这个对象返回的响应对象给返回上一个链中，基本没有做什么操作，那我们现在又要来到上一层咯，、它就是 <code>CacheInterceptor</code> 缓存拦截器了，我的直觉告诉我，这里面肯定会有跟缓存有关的内容，我们来好好看看这个类的 <code>intercept()</code>方法吧：<br>​<br>    Response networkResponse = null;<br>    try {<br>      //从下一个 Chain 对象中获得response<br>      networkResponse = chain.proceed(networkRequest);<br>    } finally {<br>      // If we’re crashing on I/O or otherwise, don’t leak the cache body.<br>      if (networkResponse == null &amp;&amp; cacheCandidate != null) {<br>        closeQuietly(cacheCandidate.body());<br>      }<br>    }</p>
+<pre><code>// If we have a cache response too, then we&apos;re doing a conditional get.
+if (cacheResponse != null) {
+  //如果缓存中的响应对象存在并且网络请求返回的响应状态是没有改变的状态，那么就会修改这个请求的header头信息
+  if (networkResponse.code() == HTTP_NOT_MODIFIED) {
+    Response response = cacheResponse.newBuilder()
+        .headers(combine(cacheResponse.headers(), networkResponse.headers()))
+        .sentRequestAtMillis(networkResponse.sentRequestAtMillis())
+        .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis())
+        .cacheResponse(stripBody(cacheResponse))
+        .networkResponse(stripBody(networkResponse))
+        .build();
+    networkResponse.body().close();
+
+    // Update the cache after combining headers but before stripping the
+    // Content-Encoding header (as performed by initContentStream()).
+    //更新缓存中重写了header信息的请求对象
+    cache.trackConditionalCacheHit();
+    cache.update(cacheResponse, response);
+    //返回请求对象
+    return response;
+  } else {
+    closeQuietly(cacheResponse.body());
+  }
+}
+//如果没有缓存中的请求对象，就先根据网络请求获得的请求对象生成一个新的带有缓存策略的请求对象
+Response response = networkResponse.newBuilder()
+    .cacheResponse(stripBody(cacheResponse))
+    .networkResponse(stripBody(networkResponse))
+    .build();
+//如果缓存策略类不为空
+if (cache != null) {
+  //如果 response响应对象中有响应体并且这个请求对象和响应对象是可以缓存的
+  if (HttpHeaders.hasBody(response) &amp;&amp; CacheStrategy.isCacheable(response, networkRequest)) {
+    // Offer this request to the cache.
+    //将这个响应添加到cache中
+    CacheRequest cacheRequest = cache.put(response);
+    //返回这个方法调用生成的response对象
+    return cacheWritingResponse(cacheRequest, response);
+  }
+  //如果不能缓存，则在cache中移除这个响应对象
+  if (HttpMethod.invalidatesCache(networkRequest.method())) {
+    try {
+      cache.remove(networkRequest);
+    } catch (IOException ignored) {
+      // The cache cannot be written.
+    }
+  }
+}
+//返回最开始得到的响应对象。
+return response;
+</code></pre><p>好了，到现在为止，缓存拦截器 <code>CacheInterceptor</code> 处理响应结果的方法我们也大致扫了一眼，接下来我们继续往前找拦截器对象，看看还有什么是值得我们去挖掘的。</p>
+<p>再往上就是 <code>BridgeInterceptor</code>，这个类的注释上是这么写的 “首先，我们根据用户创建的请求对象创建一个适合互联网的请求，然后去请求网络，最后根据网络返回的请求数据生成一个适合用户的响应对象”（翻译的可能有些不太美），大致上就是这个意思吧，那我们来看看这个类是如何把网络返回的响应对象构造成一个适合用户的对象的呢：</p>
+<pre><code>//获得响应结果
+Response networkResponse = chain.proceed(requestBuilder.build());
+//保存cookie对象
+HttpHeaders.receiveHeaders(cookieJar, userRequest.url(), networkResponse.headers());
+//把请求也当成参数注入到响应结果之中
+Response.Builder responseBuilder = networkResponse.newBuilder()
+    .request(userRequest);
+//如果请求中返回数据格式满足 gzip 并且相应结果是包含数据流格式的结果，就把这个结果封装到response响应结果中
+if (transparentGzip
+    &amp;&amp; &quot;gzip&quot;.equalsIgnoreCase(networkResponse.header(&quot;Content-Encoding&quot;))
+    &amp;&amp; HttpHeaders.hasBody(networkResponse)) {
+  GzipSource responseBody = new GzipSource(networkResponse.body().source());
+  Headers strippedHeaders = networkResponse.headers().newBuilder()
+      .removeAll(&quot;Content-Encoding&quot;)
+      .removeAll(&quot;Content-Length&quot;)
+      .build();
+  responseBuilder.headers(strippedHeaders);
+  responseBuilder.body(new RealResponseBody(strippedHeaders, Okio.buffer(responseBody)));
+}
+//返回响应对象
+return responseBuilder.build();
+</code></pre><p>这里可以看出，只是对符合 ‘gzip’ 格式的响应结果做了特殊处理。</p>
+<p>接下来，就到了 <code>RetryAndFollowUpInterceptor</code>的环节了，如果没有我们自定义的拦截器，这里就是对响应结果的最后一个处理的地方了，我们来看看它又做了什么<br>​<br>      try {<br>        response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);<br>        releaseConnection = false;<br>      } catch (RouteException e) {<br>        // The attempt to connect via a route failed. The request will not have been sent.<br>        if (!recover(e.getLastConnectException(), false, request)) {<br>          throw e.getLastConnectException();<br>        }<br>        releaseConnection = false;<br>        continue;<br>      } catch (IOException e) {<br>        // An attempt to communicate with a server failed. The request may have been sent.<br>        boolean requestSendStarted = !(e instanceof ConnectionShutdownException);<br>        if (!recover(e, requestSendStarted, request)) throw e;<br>        releaseConnection = false;<br>        continue;<br>      } finally {<br>        // We’re throwing an unchecked exception. Release any resources.<br>        if (releaseConnection) {<br>          streamAllocation.streamFailed(null);<br>          streamAllocation.release();<br>        }<br>      }</p>
+<pre><code>// Attach the prior response if it exists. Such responses never have a body.
+if (priorResponse != null) {
+  response = response.newBuilder()
+      .priorResponse(priorResponse.newBuilder()
+              .body(null)
+              .build())
+      .build();
+}
+
+Request followUp = followUpRequest(response);
+//返回response
+if (followUp == null) {
+  if (!forWebSocket) {
+    streamAllocation.release();
+  }
+  return response;
+}
+
+closeQuietly(response.body());
+
+if (++followUpCount &gt; MAX_FOLLOW_UPS) {
+  streamAllocation.release();
+  throw new ProtocolException(&quot;Too many follow-up requests: &quot; + followUpCount);
+}
+
+if (followUp.body() instanceof UnrepeatableRequestBody) {
+  streamAllocation.release();
+  throw new HttpRetryException(&quot;Cannot retry streamed HTTP body&quot;, response.code());
+}
+
+if (!sameConnection(response, followUp.url())) {
+  streamAllocation.release();
+  streamAllocation = new StreamAllocation(
+      client.connectionPool(), createAddress(followUp.url()), callStackTrace);
+} else if (streamAllocation.codec() != null) {
+  throw new IllegalStateException(&quot;Closing the body of &quot; + response
+      + &quot; didn&apos;t close its backing stream. Bad interceptor?&quot;);
+}
+
+request = followUp;
+priorResponse = response;
+</code></pre><p>好了，现在我们知道为什么要把自定义的拦截器放在最前面了，这样我们的拦截器不会对网络请求的过程做任何操作，而在最后返回的响应结果中又可以对结果做我们想要的处理，这就是 Chain 结构的好处了呀。</p>
+<p>本篇文章对响应结果做了一个简单的分析，接下来的博客可能会以 Java 后台的学习笔记为主，希望自己能技术好好进步~。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/03/OkHttp 源码解析一之请求过程初探/" rel="next" title="OkHttp源码解析">
+                <i class="fa fa-chevron-left"></i> OkHttp源码解析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/26/2017年度总结/" rel="prev" title="2017年度总结">
+                2017年度总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">eaglewang</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categroies/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">eaglewang</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.3</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
